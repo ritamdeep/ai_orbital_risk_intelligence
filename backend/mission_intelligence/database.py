@@ -1,4 +1,4 @@
-"""Mission Database loader and query utilities for ASTRAVIGIL."""
+"""Startup-loaded, Pydantic-validated Mission Database repository."""
 
 from __future__ import annotations
 
@@ -7,17 +7,18 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-from .schemas import MissionType, SatelliteMission, SensorModality
+from .schemas import SatelliteRecord
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parent / "mission_db.json"
 
 
 class MissionDatabase:
-    """In-memory repository backed by the verified mission_db.json catalog."""
+    """Loads mission_db.json once at startup and validates every record with Pydantic."""
 
     def __init__(self, db_path: Path = DEFAULT_DB_PATH) -> None:
         self.db_path = db_path
-        self._satellites: dict[int, SatelliteMission] = {}
+        self._by_primary_id: dict[int, SatelliteRecord] = {}
+        self._lookup_index: dict[int, SatelliteRecord] = {}
         self.metadata: dict[str, str] = {}
         self._load()
 
@@ -26,72 +27,71 @@ class MissionDatabase:
             raw = json.load(fh)
 
         self.metadata = {
-            "schema_version": str(raw.get("schema_version", "1.0.0")),
-            "catalog_name": str(raw.get("catalog_name", "ASTRAVIGIL Mission Database")),
-            "last_verified_utc": str(raw.get("last_verified_utc", "")),
-            "scientific_note": str(raw.get("scientific_note", "")),
+            "schemaVersion": str(raw.get("schemaVersion", "2.0.0")),
+            "catalogName": str(raw.get("catalogName", "ASTRAVIGIL Mission Database")),
+            "lastVerifiedUtc": str(raw.get("lastVerifiedUtc", "")),
         }
 
-        satellites_raw = raw.get("satellites", {})
-        parsed: dict[int, SatelliteMission] = {}
-        for key, record in satellites_raw.items():
-            mission = SatelliteMission.model_validate(record)
-            if str(mission.norad_id) != str(key):
-                raise ValueError(
-                    f"NORAD ID mismatch in mission_db.json: key={key}, record.norad_id={mission.norad_id}"
-                )
-            parsed[mission.norad_id] = mission
-        self._satellites = parsed
+        primary: dict[int, SatelliteRecord] = {}
+        index: dict[int, SatelliteRecord] = {}
+        for item in raw.get("satellites", []):
+            record = SatelliteRecord.model_validate(item)
+            primary[record.noradId] = record
+            index[record.noradId] = record
+            if record.verifiedNoradId is not None:
+                index[record.verifiedNoradId] = record
+            for alt_id in record.alternateNoradIds:
+                index[alt_id] = record
+
+        self._by_primary_id = primary
+        self._lookup_index = index
 
     def count(self) -> int:
-        return len(self._satellites)
+        return len(self._by_primary_id)
 
-    def get_by_norad_id(self, norad_id: int) -> Optional[SatelliteMission]:
-        return self._satellites.get(norad_id)
+    def get_by_norad_id(self, norad_id: int) -> Optional[SatelliteRecord]:
+        """Resolve a satellite by primary contract NORAD ID or verified alias ID."""
+        return self._lookup_index.get(norad_id)
 
-    def list_all(self) -> list[SatelliteMission]:
-        return sorted(self._satellites.values(), key=lambda m: (m.country != "India", m.name))
+    def list_all(self) -> list[SatelliteRecord]:
+        return sorted(
+            self._by_primary_id.values(),
+            key=lambda s: (s.country != "India", s.name),
+        )
 
-    def filter_missions(
+    def filter_satellites(
         self,
         *,
-        mission_type: Optional[MissionType] = None,
-        country: Optional[str] = None,
-        service_id: Optional[str] = None,
-        sensor_modality: Optional[SensorModality] = None,
-        region: Optional[str] = None,
-    ) -> list[SatelliteMission]:
+        category: Optional[str] = None,
+        operator: Optional[str] = None,
+        status: Optional[str] = None,
+        search: Optional[str] = None,
+    ) -> list[SatelliteRecord]:
         results = self.list_all()
-        if mission_type is not None:
-            results = [m for m in results if m.mission_type == mission_type]
-        if country:
-            country_norm = country.strip().lower()
-            results = [m for m in results if m.country.lower() == country_norm]
-        if service_id:
-            service_norm = service_id.strip().lower()
+        if category and category.strip().lower() != "all":
+            cat_norm = category.strip().lower()
+            results = [s for s in results if s.category.lower() == cat_norm]
+        if operator:
+            op_norm = operator.strip().lower()
+            results = [s for s in results if op_norm in s.operator.lower()]
+        if status:
+            st_norm = status.strip().lower()
+            results = [s for s in results if s.status.lower() == st_norm]
+        if search:
+            q = search.strip().lower()
             results = [
-                m
-                for m in results
-                if any(dep.service_id.lower() == service_norm for dep in m.active_service_dependencies)
-            ]
-        if sensor_modality is not None:
-            results = [
-                m for m in results if any(s.modality == sensor_modality for s in m.sensors)
-            ]
-        if region:
-            region_norm = region.strip().lower()
-            results = [
-                m
-                for m in results
-                if any(
-                    region_norm in r.lower() or r.lower() == "global"
-                    for r in m.coverage_regions
-                )
+                s
+                for s in results
+                if q in s.name.lower()
+                or q in str(s.noradId)
+                or (s.verifiedNoradId is not None and q in str(s.verifiedNoradId))
+                or any(q in alt.lower() for alt in s.alternateNames)
+                or q in s.operator.lower()
             ]
         return results
 
 
 @lru_cache(maxsize=1)
 def get_mission_db() -> MissionDatabase:
-    """Return a cached singleton MissionDatabase instance."""
+    """Return the singleton startup-validated MissionDatabase."""
     return MissionDatabase()
