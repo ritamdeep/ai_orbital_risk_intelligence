@@ -1,0 +1,12 @@
+{
+  "conjunctionId": "sim-flood-eos04-20261122T063000Z",
+  "secondaryNoradId": 31114,
+  "secondaryName": "FENGYUN 1C DEB",
+  "secondaryObjectType": "DEBRIS",
+  "missDistanceKm": 1.35,
+  "relativeVelocityKms": 14.12,
+  "tcaUtc": "2026-11-22T06:30:00Z",
+  "screeningTier": "ELEVATED_REVIEW",
+  "orbitalDataSource": "simulated",
+  "activeHazardContext": "Active severe monsoon flood alert in Assam / Brahmaputra Basin with dense cloud cover."
+}

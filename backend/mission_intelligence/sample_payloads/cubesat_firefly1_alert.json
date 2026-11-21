@@ -1,0 +1,11 @@
+{
+  "conjunctionId": "sim-smallsat-firefly1-20261122T154500Z",
+  "secondaryNoradId": 34454,
+  "secondaryName": "COSMOS 2251 DEB",
+  "secondaryObjectType": "DEBRIS",
+  "missDistanceKm": 2.1,
+  "relativeVelocityKms": 13.4,
+  "tcaUtc": "2026-11-22T15:45:00Z",
+  "screeningTier": "ELEVATED_REVIEW",
+  "orbitalDataSource": "simulated"
+}

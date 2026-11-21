@@ -1,0 +1,12 @@
+{
+  "conjunctionId": "sim-cyclone-insat3dr-20261122T111500Z",
+  "secondaryNoradId": null,
+  "secondaryName": "SIMULATED GEO DRIFT OBJECT",
+  "secondaryObjectType": "ROCKET_BODY",
+  "missDistanceKm": 3.8,
+  "relativeVelocityKms": 0.45,
+  "tcaUtc": "2026-11-22T11:15:00Z",
+  "screeningTier": "ELEVATED_REVIEW",
+  "orbitalDataSource": "simulated",
+  "activeHazardContext": "Active Bay of Bengal cyclone alert near Odisha coast requiring continuous geostationary imaging."
+}

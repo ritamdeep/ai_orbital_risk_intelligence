@@ -1,0 +1,1919 @@
+{
+  "schemaVersion": "2.0.0",
+  "catalogName": "ASTRAVIGIL Verified & Annotated Satellite Mission Database",
+  "lastVerifiedUtc": "2026-11-22T00:00:00Z",
+  "satellites": [
+    {
+      "noradId": 44431,
+      "verifiedNoradId": 44804,
+      "alternateNoradIds": [44804],
+      "cosparId": "2019-081A",
+      "name": "CARTOSAT-3",
+      "alternateNames": ["Cartosat-3"],
+      "operator": "ISRO",
+      "country": "India",
+      "category": "Earth Observation",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~505-509 km)",
+      "status": "Operational",
+      "launchYear": 2019,
+      "missionSummary": "Third-generation agile high-resolution optical imaging satellite operated by ISRO for large-scale cartography, urban infrastructure mapping, coastal land-use planning, and post-disaster optical damage assessment.",
+      "capabilities": {
+        "sensorType": "Panchromatic (PAN) and 4-band Multispectral (MX) optical camera",
+        "sensorFamily": "OPTICAL_VHR",
+        "allWeatherCapable": false,
+        "spatialResolution": "Sub-metre panchromatic (~0.25-0.28 m PAN) and ~1.14 m multispectral (nadir)",
+        "spatialResolutionMeters": 0.25,
+        "revisitTime": "Multi-day nominal revisit (~4-5 days with off-nadir agility; mission-tasking dependent)",
+        "revisitDays": 5.0,
+        "coverage": "Global access with operational priority over India and South Asia",
+        "coverageRegions": ["India", "South Asia", "Global"],
+        "dataAccess": "Restricted / National institutional tasking (ISRO / NRSC)",
+        "dataAccessTier": "NATIONAL_RESTRICTED"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "disaster_damage_mapping",
+          "name": "Post-Disaster Damage Assessment",
+          "sector": "Disaster Management",
+          "impactSummary": "Clear-sky very-high-resolution optical imagery supporting structural damage and landslide mapping.",
+          "dataSource": "real",
+          "sourceNote": "ISRO Cartosat-3 mission profile (https://www.isro.gov.in/Cartosat_3.html)"
+        },
+        {
+          "serviceId": "urban_cartography",
+          "name": "Large-Scale Urban & Cadastral Mapping",
+          "sector": "Urban Planning & Infrastructure",
+          "impactSummary": "High-resolution national mapping, infrastructure planning, and coastal land-use monitoring.",
+          "dataSource": "real",
+          "sourceNote": "ISRO Cartosat-3 mission profile (https://www.isro.gov.in/Cartosat_3.html)"
+        },
+        {
+          "serviceId": "flood_monitoring",
+          "name": "Clear-Sky Flood & Infrastructure Verification",
+          "sector": "Hydrology & Emergency Response",
+          "impactSummary": "High-detail optical verification of flooded roads and embankments once cloud cover clears.",
+          "dataSource": "real",
+          "sourceNote": "NRSC Bhuvan / ISRO Disaster Management Support Programme"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 94,
+          "description": "High-detail clear-sky optical damage assessment for floods, landslides, and earthquakes.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 95,
+          "description": "Sub-metre optical panchromatic resolution among India's civil Earth-observation fleet.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 90,
+          "description": "Widely relied upon for national large-scale urban planning, cartography, and coastal mapping.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 15,
+          "description": "Fewer alternatives, higher criticality (inverted scale): very few domestic optical missions match sub-metre class resolution.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 95,
+          "description": "Strategic national cartographic and infrastructure monitoring asset.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 92,
+          "description": "High downstream geospatial, urban analytics, and civil engineering value.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "mock",
+          "sourceNote": "Contract compatibility alias (44431); verified CelesTrak/N2YO NORAD ID for Cartosat-3 (2019-081A) is 44804 (see GAPS.md)."
+        },
+        "verifiedNoradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD catalog ID 44804 for Cartosat-3 / 2019-081A (https://www.n2yo.com/satellite/?s=44804)."
+        },
+        "capabilities.spatialResolution": {
+          "dataSource": "real",
+          "sourceNote": "ISRO Cartosat-3 specifications (~0.25 m PAN, ~1.14 m MX) and WMO OSCAR."
+        },
+        "capabilities.revisitTime": {
+          "dataSource": "mock",
+          "sourceNote": "Generic multi-day agile revisit estimate; exact revisit depends on off-nadir tasking."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.isro.gov.in/Cartosat_3.html",
+        "https://space.oscar.wmo.int/satellites/view/cartosat_3",
+        "https://www.n2yo.com/satellite/?s=44804"
+      ]
+    },
+    {
+      "noradId": 51656,
+      "verifiedNoradId": 51656,
+      "alternateNoradIds": [],
+      "cosparId": "2022-013A",
+      "name": "EOS-04 / RISAT-1A",
+      "alternateNames": ["EOS-04", "RISAT-1A"],
+      "operator": "ISRO",
+      "country": "India",
+      "category": "Disaster Monitoring",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~529 km)",
+      "status": "Operational",
+      "launchYear": 2022,
+      "missionSummary": "ISRO C-band Synthetic Aperture Radar (SAR) Earth-observation satellite providing all-weather, day-and-night imagery for flood inundation mapping, agriculture, forestry, and soil moisture monitoring.",
+      "capabilities": {
+        "sensorType": "C-band Synthetic Aperture Radar (SAR, 5.35 GHz)",
+        "sensorFamily": "SAR_C_BAND",
+        "allWeatherCapable": true,
+        "spatialResolution": "Multi-mode SAR (~1 m fine resolution spotlight/stripmap to ~50 m coarse ScanSAR)",
+        "spatialResolutionMeters": 1.0,
+        "revisitTime": "17-day nominal repeat cycle (faster effective revisit via off-nadir SAR modes)",
+        "revisitDays": 17.0,
+        "coverage": "Global radar imaging with operational priority over India and Indian Ocean basins",
+        "coverageRegions": ["India", "South Asia", "Indian Ocean", "Global"],
+        "dataAccess": "Restricted / National institutional tasking (ISRO / NRSC, Charter eligible)",
+        "dataAccessTier": "NATIONAL_RESTRICTED"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "flood_monitoring",
+          "name": "All-Weather Flood Inundation Mapping",
+          "sector": "Disaster Management & Hydrology",
+          "impactSummary": "Cloud-penetrating C-band radar maps monsoon flood extent when optical satellites are obscured.",
+          "dataSource": "real",
+          "sourceNote": "ISRO EOS-04 mission page (https://www.isro.gov.in/EOS_04.html)"
+        },
+        {
+          "serviceId": "cyclone_tracking",
+          "name": "Post-Cyclone Coastal Inundation Assessment",
+          "sector": "Coastal Emergency Management",
+          "impactSummary": "Maps coastal flooding and storm-surge extent under dense cyclonic cloud cover.",
+          "dataSource": "real",
+          "sourceNote": "ISRO / NRSC Disaster Management Support Programme"
+        },
+        {
+          "serviceId": "agriculture_monitoring",
+          "name": "Monsoon Crop, Forestry & Soil Moisture Monitoring",
+          "sector": "Agriculture & Forestry",
+          "impactSummary": "All-weather radar observations supporting Kharif crop and soil moisture monitoring.",
+          "dataSource": "real",
+          "sourceNote": "ISRO EOS-04 mission page (https://www.isro.gov.in/EOS_04.html)"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 98,
+          "description": "Primary all-weather radar support for monsoon flood inundation and cyclone impact mapping.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 94,
+          "description": "All-weather, day-and-night C-band SAR capability overcoming monsoon cloud cover.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 92,
+          "description": "High operational reliance by national flood mapping and agricultural monitoring agencies.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 15,
+          "description": "Fewer alternatives, higher criticality (inverted scale): domestic SAR backups are scarce; international SAR missions differ in tasking control and pass timing.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 92,
+          "description": "Strategic sovereign all-weather radar observation capability.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 85,
+          "description": "Strong hydrology, agriculture, forestry, and environmental science value.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 51656 for EOS-04 / 2022-013A."
+        },
+        "capabilities.sensorType": {
+          "dataSource": "real",
+          "sourceNote": "ISRO EOS-04 / WMO OSCAR public mission specifications."
+        },
+        "capabilities.revisitTime": {
+          "dataSource": "real",
+          "sourceNote": "WMO OSCAR nominal 17-day repeat cycle for EOS-04."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.isro.gov.in/EOS_04.html",
+        "https://space.oscar.wmo.int/satellites/view/eos_04"
+      ]
+    },
+    {
+      "noradId": 41783,
+      "verifiedNoradId": 41783,
+      "alternateNoradIds": [],
+      "cosparId": "2016-059B",
+      "name": "PRATHAM",
+      "alternateNames": ["PRATHAM (IIT Bombay)"],
+      "operator": "IIT Bombay / ISRO",
+      "country": "India",
+      "category": "Scientific / Student",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~670-686 km)",
+      "status": "Inactive",
+      "launchYear": 2016,
+      "missionSummary": "Student-built ionospheric research microsatellite developed by IIT Bombay and launched by ISRO (PSLV-C35) to measure Total Electron Content (TEC) via dual-frequency radio beacons. Active mission transmissions have ceased, though the spacecraft remains tracked in orbit.",
+      "capabilities": {
+        "sensorType": "Dual-frequency radio beacon payload (145.98 MHz / 437.455 MHz) for ionospheric TEC measurement",
+        "sensorFamily": "IONOSPHERIC_BEACON",
+        "allWeatherCapable": true,
+        "spatialResolution": "Not applicable (point/column ionospheric Total Electron Content measurement)",
+        "spatialResolutionMeters": null,
+        "revisitTime": "Daily ground-station passes during active mission (mission currently inactive)",
+        "revisitDays": 1.0,
+        "coverage": "Global orbit with ground-station reception focus over India and partner universities",
+        "coverageRegions": ["India", "Global"],
+        "dataAccess": "Open / Academic (historical university experiment)",
+        "dataAccessTier": "ACADEMIC"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "ionospheric_research",
+          "name": "Ionospheric Total Electron Content (TEC) Research",
+          "sector": "Space Science & Education",
+          "impactSummary": "Academic space-weather and university satellite engineering demonstration (no operational emergency service dependency).",
+          "dataSource": "real",
+          "sourceNote": "IIT Bombay Pratham / ISRO PSLV-C35 mission documentation"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 5,
+          "description": "No operational disaster-monitoring role; academic ionospheric experiment (currently inactive).",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 25,
+          "description": "Student beacon payload replicated by modern GNSS/ionospheric monitoring networks.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 10,
+          "description": "No active operational downstream public service dependency.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 80,
+          "description": "Fewer alternatives, higher criticality (inverted scale): many ground GNSS receivers and active ionospheric missions provide TEC observations.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 10,
+          "description": "Educational student technology demonstrator; not critical national infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 40,
+          "description": "Historical academic and student satellite capacity-building value.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 41783 for PRATHAM / 2016-059B (https://www.n2yo.com/satellite/?s=41783)."
+        },
+        "status": {
+          "dataSource": "real",
+          "sourceNote": "Public orbital tracking catalogs list PRATHAM as Inactive after completing its post-2016 student mission (see GAPS.md)."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.isro.gov.in/PSLV_C35_SCATSAT_1.html",
+        "https://www.n2yo.com/satellite/?s=41783"
+      ]
+    },
+    {
+      "noradId": 54361,
+      "verifiedNoradId": 54361,
+      "alternateNoradIds": [],
+      "cosparId": "2022-158A",
+      "name": "OCEANSAT-3 / EOS-06",
+      "alternateNames": ["EOS-06", "Oceansat-3"],
+      "operator": "ISRO",
+      "country": "India",
+      "category": "Earth Observation",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~742 km)",
+      "status": "Operational",
+      "launchYear": 2022,
+      "missionSummary": "ISRO third-generation ocean observation satellite carrying Ocean Color Monitor (OCM-3), Sea Surface Temperature Monitor (SSTM), and Ku-band Scatterometer (OSCAT-3) supporting cyclone wind-vector forecasting and marine advisories.",
+      "capabilities": {
+        "sensorType": "Multi-sensor ocean suite: OCM-3 (13-band optical), SSTM (thermal IR), OSCAT-3 (Ku-band scatterometer)",
+        "sensorFamily": "OCEAN_MULTI_SENSOR",
+        "allWeatherCapable": true,
+        "spatialResolution": "~360 m OCM-3 ocean color; ~1 km SSTM thermal IR; wide-swath scatterometer ocean winds",
+        "spatialResolutionMeters": 360.0,
+        "revisitTime": "~2-day global repeat cadence",
+        "revisitDays": 2.0,
+        "coverage": "Global oceans with operational focus on Indian Ocean, Bay of Bengal, and Arabian Sea",
+        "coverageRegions": ["India", "Indian Ocean", "Bay of Bengal", "Arabian Sea", "Global"],
+        "dataAccess": "Institutional / Open scientific portal (ISRO MOSDAC / NRSC / INCOIS)",
+        "dataAccessTier": "NATIONAL_RESTRICTED"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "cyclone_tracking",
+          "name": "Ocean Wind-Vector & Cyclone Genesis Monitoring",
+          "sector": "Meteorology & Disaster Management",
+          "impactSummary": "Ku-band scatterometer wind vectors support cyclone genesis and intensification forecasts over the Bay of Bengal and Arabian Sea.",
+          "dataSource": "real",
+          "sourceNote": "ISRO EOS-06 / WMO OSCAR mission profile"
+        },
+        {
+          "serviceId": "maritime_safety",
+          "name": "Ocean State Forecasting & Fisheries Advisories",
+          "sector": "Marine & Coastal Economy",
+          "impactSummary": "Ocean color and sea-surface temperature inputs feed INCOIS Potential Fishing Zones and marine advisories.",
+          "dataSource": "real",
+          "sourceNote": "ISRO EOS-06 / INCOIS documentation"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 86,
+          "description": "Supports cyclone wind-field characterization and marine hazard warnings.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 84,
+          "description": "Combined domestic ocean-color, SST, and Ku-band scatterometer payload on one spacecraft.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 82,
+          "description": "Operational inputs for marine meteorology, ocean state forecasting, and coastal fisheries.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 30,
+          "description": "Fewer alternatives, higher criticality (inverted scale): international polar ocean/weather missions provide partial overlap for individual sensors, not an identical combined suite.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 75,
+          "description": "Important maritime domain awareness and coastal oceanography support.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 85,
+          "description": "High fisheries, climate science, and marine ecosystem monitoring value.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 54361 for EOS-06 / Oceansat-3 (2022-158A)."
+        },
+        "capabilities.sensorType": {
+          "dataSource": "real",
+          "sourceNote": "ISRO PSLV-C54 / EOS-06 mission specifications and WMO OSCAR."
+        },
+        "capabilities.revisitTime": {
+          "dataSource": "real",
+          "sourceNote": "WMO OSCAR (~2-day repeat for wide-swath OCM-3/OSCAT-3)."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.isro.gov.in/PSLV_C54_EOS_06_Mission.html",
+        "https://space.oscar.wmo.int/satellites/view/eos_06"
+      ]
+    },
+    {
+      "noradId": 41752,
+      "verifiedNoradId": 41752,
+      "alternateNoradIds": [],
+      "cosparId": "2016-054A",
+      "name": "INSAT-3DR",
+      "alternateNames": ["INSAT-3DR"],
+      "operator": "ISRO",
+      "country": "India",
+      "category": "Weather",
+      "orbitRegime": "GEO",
+      "orbitSubtype": "GEO / Geostationary (~74 deg E)",
+      "status": "Operational",
+      "launchYear": 2016,
+      "missionSummary": "ISRO geostationary meteorological satellite providing continuous weather imaging, 19-channel atmospheric sounding, Data Relay Transponder (DRT), and Satellite Aided Search and Rescue (SAS&R) over India and the Indian Ocean.",
+      "capabilities": {
+        "sensorType": "6-channel Geostationary Imager, 19-channel Atmospheric Sounder, DRT & SAS&R transponder",
+        "sensorFamily": "GEO_MET_IMAGER_SOUNDER",
+        "allWeatherCapable": false,
+        "spatialResolution": "1 km visible / 4 km thermal IR / 8 km water-vapor imager; 10 km atmospheric sounder",
+        "spatialResolutionMeters": 1000.0,
+        "revisitTime": "Continuous geostationary full-disk imaging (~26-30 min repeat)",
+        "revisitDays": 0.02,
+        "coverage": "Full-disk view centered over India, South Asia, Bay of Bengal, Arabian Sea, and Indian Ocean",
+        "coverageRegions": ["India", "South Asia", "Indian Ocean", "Bay of Bengal", "Arabian Sea"],
+        "dataAccess": "Institutional operational feed (ISRO MOSDAC / IMD) with WMO sharing",
+        "dataAccessTier": "NATIONAL_RESTRICTED"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "cyclone_tracking",
+          "name": "Continuous Geostationary Cyclone & Severe Storm Nowcasting",
+          "sector": "Meteorology & Disaster Management",
+          "impactSummary": "Near-continuous cloud-top and atmospheric monitoring for Indian Ocean cyclones and severe convective storms.",
+          "dataSource": "real",
+          "sourceNote": "ISRO INSAT-3DR mission profile (https://www.isro.gov.in/INSAT_3DR.html)"
+        },
+        {
+          "serviceId": "weather_forecasting",
+          "name": "National Weather & Monsoon Atmospheric Sounding",
+          "sector": "Meteorology & Aviation",
+          "impactSummary": "Vertical temperature and humidity profiles supporting numerical weather prediction and monsoon advisories.",
+          "dataSource": "real",
+          "sourceNote": "ISRO MOSDAC / IMD / WMO OSCAR"
+        },
+        {
+          "serviceId": "search_and_rescue",
+          "name": "Satellite-Aided Search & Rescue (SAS&R) Distress Relay",
+          "sector": "Maritime & Aviation Safety",
+          "impactSummary": "Relays COSPAS-SARSAT emergency distress beacons across the Indian Ocean region.",
+          "dataSource": "real",
+          "sourceNote": "ISRO INSAT-3DR mission profile"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 96,
+          "description": "Continuous geostationary severe-weather, cyclone, and distress-beacon monitoring.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 88,
+          "description": "Combines geostationary weather imaging, 19-channel sounding, DRT, and SAS&R over 74 deg E.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 95,
+          "description": "Supports national meteorological forecasting, aviation weather, and search-and-rescue networks.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 28,
+          "description": "Fewer alternatives, higher criticality (inverted scale): INSAT-3DS provides strong domestic continuity, while Meteosat-9/Himawari-9 lack domestic DRT/SAS&R and optimal nadir geometry.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 88,
+          "description": "Core national meteorological and emergency distress-relay infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 88,
+          "description": "High value for aviation, agriculture, climate monitoring, and public weather services.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 41752 for INSAT-3DR / 2016-054A."
+        },
+        "capabilities.sensorType": {
+          "dataSource": "real",
+          "sourceNote": "ISRO INSAT-3DR and WMO OSCAR public payload specifications."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.isro.gov.in/INSAT_3DR.html",
+        "https://space.oscar.wmo.int/satellites/view/insat_3dr"
+      ]
+    },
+    {
+      "noradId": 58990,
+      "verifiedNoradId": 58990,
+      "alternateNoradIds": [],
+      "cosparId": "2024-033A",
+      "name": "INSAT-3DS",
+      "alternateNames": ["INSAT-3DS"],
+      "operator": "ISRO",
+      "country": "India",
+      "category": "Weather",
+      "orbitRegime": "GEO",
+      "orbitSubtype": "GEO / Geostationary (~82 deg E)",
+      "status": "Operational",
+      "launchYear": 2024,
+      "missionSummary": "ISRO follow-on geostationary meteorological satellite funded by India's Ministry of Earth Sciences to provide continuity and enhanced weather imaging, atmospheric sounding, DRT, and SAS&R alongside INSAT-3DR.",
+      "capabilities": {
+        "sensorType": "6-channel Geostationary Imager, 19-channel Atmospheric Sounder, DRT & SAS&R transponder",
+        "sensorFamily": "GEO_MET_IMAGER_SOUNDER",
+        "allWeatherCapable": false,
+        "spatialResolution": "1 km visible / 4 km thermal IR imager; 10 km atmospheric sounder",
+        "spatialResolutionMeters": 1000.0,
+        "revisitTime": "Continuous geostationary full-disk imaging (~26-30 min repeat)",
+        "revisitDays": 0.02,
+        "coverage": "Full-disk view centered over India, South Asia, Bay of Bengal, Arabian Sea, and Indian Ocean",
+        "coverageRegions": ["India", "South Asia", "Indian Ocean", "Bay of Bengal", "Arabian Sea"],
+        "dataAccess": "Institutional operational feed (ISRO MOSDAC / IMD) with WMO sharing",
+        "dataAccessTier": "NATIONAL_RESTRICTED"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "cyclone_tracking",
+          "name": "Primary Geostationary Cyclone & Monsoon Tracking",
+          "sector": "Meteorology & Disaster Management",
+          "impactSummary": "Operational continuity geostationary imaging and sounding for Indian Ocean cyclone alerts.",
+          "dataSource": "real",
+          "sourceNote": "ISRO GSLV-F14 / INSAT-3DS mission profile"
+        },
+        {
+          "serviceId": "search_and_rescue",
+          "name": "COSPAS-SARSAT Distress Alert Relay",
+          "sector": "Maritime & Aviation Safety",
+          "impactSummary": "Geostationary emergency distress beacon relay over the Indian Ocean.",
+          "dataSource": "real",
+          "sourceNote": "ISRO GSLV-F14 / INSAT-3DS mission profile"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 97,
+          "description": "Newest primary Indian geostationary cyclone and severe-weather observation satellite.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 88,
+          "description": "Combined geostationary imager, sounder, DRT, and SAS&R payload.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 95,
+          "description": "High reliance by IMD weather services, aviation, and coastal disaster authorities.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 28,
+          "description": "Fewer alternatives, higher criticality (inverted scale): INSAT-3DR provides domestic pairing, but older hardware and external GEO satellites have slot/transponder gaps.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 88,
+          "description": "Core national meteorological and emergency relay infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 88,
+          "description": "Broad economic value across aviation, agriculture, and climate science.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 58990 for INSAT-3DS / 2024-033A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.isro.gov.in/GSLV_F14_INSAT_3DS_Mission.html",
+        "https://space.oscar.wmo.int/satellites/view/insat_3ds"
+      ]
+    },
+    {
+      "noradId": 39634,
+      "verifiedNoradId": 39634,
+      "alternateNoradIds": [],
+      "cosparId": "2014-016A",
+      "name": "Sentinel-1A",
+      "alternateNames": ["SENTINEL-1A"],
+      "operator": "ESA / Copernicus",
+      "country": "European Union",
+      "category": "Disaster Monitoring",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~693 km)",
+      "status": "Operational",
+      "launchYear": 2014,
+      "missionSummary": "ESA Copernicus C-band SAR mission providing free and open global all-weather radar imagery for flood mapping, land deformation, and maritime monitoring.",
+      "capabilities": {
+        "sensorType": "C-band Synthetic Aperture Radar (C-SAR, 5.405 GHz)",
+        "sensorFamily": "SAR_C_BAND",
+        "allWeatherCapable": true,
+        "spatialResolution": "~5 m x 20 m in Interferometric Wide Swath (IW) primary mode",
+        "spatialResolutionMeters": 5.0,
+        "revisitTime": "12-day single-satellite repeat (6-day combined with Sentinel-1C)",
+        "revisitDays": 12.0,
+        "coverage": "Global systematic acquisition (including India and South Asia)",
+        "coverageRegions": ["Global", "India", "South Asia", "Indian Ocean", "Europe"],
+        "dataAccess": "Open Public (Copernicus Data Space; pre-scheduled routine acquisition)",
+        "dataAccessTier": "OPEN_PUBLIC"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "flood_monitoring",
+          "name": "Global Open-Access SAR Flood Mapping",
+          "sector": "Disaster Management",
+          "impactSummary": "Open C-band radar datasets widely used by Copernicus EMS and national flood-mapping agencies.",
+          "dataSource": "real",
+          "sourceNote": "ESA Sentinel-1 Mission Overview (https://sentinel.esa.int/web/sentinel/missions/sentinel-1)"
+        },
+        {
+          "serviceId": "maritime_safety",
+          "name": "Maritime & Coastal Radar Surveillance",
+          "sector": "Maritime Safety",
+          "impactSummary": "Supports oil-spill detection, sea-ice monitoring, and coastal storm mapping.",
+          "dataSource": "real",
+          "sourceNote": "ESA Sentinel-1 Mission Overview"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 92,
+          "description": "Global open-access all-weather SAR backbone for flood and landslide response.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 80,
+          "description": "Systematic free C-band SAR Interferometric Wide Swath coverage.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 88,
+          "description": "Broad international reliance across civil protection, hydrology, and climate monitoring.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 45,
+          "description": "Fewer alternatives, higher criticality (inverted scale): Sentinel-1C shares the constellation and other C/L-band SAR missions exist globally.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 72,
+          "description": "Major European and global public civil-security Earth-observation infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 90,
+          "description": "Extensive scientific, agricultural, and commercial geospatial downstream ecosystem.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 39634 for Sentinel-1A / 2014-016A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://sentinel.esa.int/web/sentinel/missions/sentinel-1",
+        "https://space.oscar.wmo.int/satellites/view/sentinel_1a"
+      ]
+    },
+    {
+      "noradId": 62261,
+      "verifiedNoradId": 62261,
+      "alternateNoradIds": [],
+      "cosparId": "2024-235A",
+      "name": "Sentinel-1C",
+      "alternateNames": ["SENTINEL-1C"],
+      "operator": "ESA / Copernicus",
+      "country": "European Union",
+      "category": "Disaster Monitoring",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~693 km)",
+      "status": "Operational",
+      "launchYear": 2024,
+      "missionSummary": "ESA Copernicus C-band SAR satellite restoring two-satellite Sentinel-1 revisit cadence globally, adding an AIS maritime tracking receiver.",
+      "capabilities": {
+        "sensorType": "C-band Synthetic Aperture Radar (C-SAR, 5.405 GHz) + AIS receiver",
+        "sensorFamily": "SAR_C_BAND",
+        "allWeatherCapable": true,
+        "spatialResolution": "~5 m x 20 m in Interferometric Wide Swath (IW) primary mode",
+        "spatialResolutionMeters": 5.0,
+        "revisitTime": "12-day single-satellite repeat (6-day combined with Sentinel-1A)",
+        "revisitDays": 12.0,
+        "coverage": "Global systematic acquisition (including India and South Asia)",
+        "coverageRegions": ["Global", "India", "South Asia", "Indian Ocean", "Europe"],
+        "dataAccess": "Open Public (Copernicus Data Space; pre-scheduled routine acquisition)",
+        "dataAccessTier": "OPEN_PUBLIC"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "flood_monitoring",
+          "name": "Copernicus Open C-Band SAR Flood Mapping",
+          "sector": "Disaster Management",
+          "impactSummary": "Restores 6-day global open C-band SAR cadence alongside Sentinel-1A.",
+          "dataSource": "real",
+          "sourceNote": "ESA Sentinel-1C Mission Overview"
+        },
+        {
+          "serviceId": "maritime_safety",
+          "name": "SAR + AIS Maritime Surveillance",
+          "sector": "Maritime Safety",
+          "impactSummary": "Combined radar and AIS ship tracking for maritime safety and spill monitoring.",
+          "dataSource": "real",
+          "sourceNote": "ESA Sentinel-1C Mission Overview"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 92,
+          "description": "High-value open C-band SAR support for global flood and hazard mapping.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 82,
+          "description": "Open C-band SAR paired with integrated AIS maritime reception.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 86,
+          "description": "Core Copernicus emergency and maritime monitoring infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 45,
+          "description": "Fewer alternatives, higher criticality (inverted scale): paired with Sentinel-1A and complemented by international SAR spacecraft.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 74,
+          "description": "Strategic European public Earth-observation asset.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 88,
+          "description": "Broad scientific and commercial geospatial applications.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 62261 for Sentinel-1C / 2024-235A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.esa.int/Applications/Observing_the_Earth/Copernicus/Sentinel-1",
+        "https://space.oscar.wmo.int/satellites/view/sentinel_1c"
+      ]
+    },
+    {
+      "noradId": 39766,
+      "verifiedNoradId": 39766,
+      "alternateNoradIds": [],
+      "cosparId": "2014-029A",
+      "name": "ALOS-2",
+      "alternateNames": ["Daichi-2"],
+      "operator": "JAXA",
+      "country": "Japan",
+      "category": "Disaster Monitoring",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~628 km)",
+      "status": "Operational",
+      "launchYear": 2014,
+      "missionSummary": "JAXA L-band Synthetic Aperture Radar (PALSAR-2) satellite providing cloud- and vegetation-penetrating radar observations for flood, earthquake, and landslide response.",
+      "capabilities": {
+        "sensorType": "L-band Synthetic Aperture Radar (PALSAR-2, 1.2 GHz)",
+        "sensorFamily": "SAR_L_BAND",
+        "allWeatherCapable": true,
+        "spatialResolution": "~3 m Stripmap (~1x3 m Spotlight to 60-100 m ScanSAR)",
+        "spatialResolutionMeters": 3.0,
+        "revisitTime": "14-day nominal repeat cycle",
+        "revisitDays": 14.0,
+        "coverage": "Global access with strong Asia-Pacific and Sentinel Asia emergency coverage",
+        "coverageRegions": ["Global", "Asia-Pacific", "India", "South Asia"],
+        "dataAccess": "Restricted / Tasked (International Charter & Sentinel Asia eligible)",
+        "dataAccessTier": "CHARTER_TASKED"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "flood_monitoring",
+          "name": "Canopy-Penetrating L-Band Flood Mapping",
+          "sector": "Disaster Management",
+          "impactSummary": "L-band radar penetrates dense vegetation better than C-band for flooded forest and river basins.",
+          "dataSource": "real",
+          "sourceNote": "JAXA ALOS-2 / PALSAR-2 mission page (https://www.eorc.jaxa.jp/ALOS-2/en/)"
+        },
+        {
+          "serviceId": "disaster_damage_mapping",
+          "name": "Crustal Deformation & Landslide InSAR",
+          "sector": "Seismic & Geohazard Monitoring",
+          "impactSummary": "High-coherence L-band InSAR for earthquakes and mountainous landslides.",
+          "dataSource": "real",
+          "sourceNote": "JAXA ALOS-2 / Sentinel Asia"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 88,
+          "description": "High-value disaster response asset via Sentinel Asia and International Charter.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 90,
+          "description": "Specialized L-band radar capable of canopy penetration and vegetated InSAR coherence.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 76,
+          "description": "Used by disaster-response charters, forestry agencies, and geohazard teams.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 30,
+          "description": "Fewer alternatives, higher criticality (inverted scale): very few operational spaceborne L-band SAR missions exist.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 75,
+          "description": "Key Japanese national geohazard and land-monitoring spacecraft.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 80,
+          "description": "Strong forestry biomass, crustal deformation, and hazard science value.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 39766 for ALOS-2 / 2014-029A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.eorc.jaxa.jp/ALOS-2/en/",
+        "https://space.oscar.wmo.int/satellites/view/alos_2"
+      ]
+    },
+    {
+      "noradId": 44322,
+      "verifiedNoradId": 44322,
+      "alternateNoradIds": [],
+      "cosparId": "2019-033A",
+      "name": "RCM-1",
+      "alternateNames": ["RADARSAT Constellation Mission 1"],
+      "operator": "Canadian Space Agency (CSA)",
+      "country": "Canada",
+      "category": "Disaster Monitoring",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~600 km)",
+      "status": "Operational",
+      "launchYear": 2019,
+      "missionSummary": "C-band SAR spacecraft in Canada's three-satellite RADARSAT Constellation supporting maritime surveillance, disaster response, and ecosystem monitoring.",
+      "capabilities": {
+        "sensorType": "C-band Synthetic Aperture Radar (SAR, 5.405 GHz)",
+        "sensorFamily": "SAR_C_BAND",
+        "allWeatherCapable": true,
+        "spatialResolution": "~3 m high-resolution mode to 50-100 m wide-swath modes",
+        "spatialResolutionMeters": 3.0,
+        "revisitTime": "12-day single-satellite repeat (4-day constellation repeat)",
+        "revisitDays": 12.0,
+        "coverage": "Global access with primary operational focus on Canada and maritime zones",
+        "coverageRegions": ["Global", "North America", "India", "South Asia"],
+        "dataAccess": "Restricted / Government (International Charter eligible for major disasters)",
+        "dataAccessTier": "CHARTER_TASKED"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "flood_monitoring",
+          "name": "C-Band SAR Emergency Flood Support",
+          "sector": "Disaster Management",
+          "impactSummary": "Contributes radar passes during major disasters via International Charter activation.",
+          "dataSource": "real",
+          "sourceNote": "Canadian Space Agency RCM specifications"
+        },
+        {
+          "serviceId": "maritime_safety",
+          "name": "Maritime & Ice Surveillance",
+          "sector": "Maritime Safety",
+          "impactSummary": "Routine radar ship detection and sea-ice monitoring.",
+          "dataSource": "real",
+          "sourceNote": "Canadian Space Agency RCM specifications"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 80,
+          "description": "Supports emergency flood and maritime hazard response.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 72,
+          "description": "Multi-mode C-band SAR with compact polarimetry.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 72,
+          "description": "Operational government maritime and disaster services.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 60,
+          "description": "Fewer alternatives, higher criticality (inverted scale): operates within a 3-satellite constellation (RCM-1/2/3) with peer C-band SAR satellites.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 70,
+          "description": "Important Canadian national maritime surveillance asset.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 65,
+          "description": "Moderate public/scientific radar access outside Canadian government users.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 44322 for RCM-1 / 2019-033A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.asc-csa.gc.ca/eng/satellites/radarsat/technical-features/characteristics.asp"
+      ]
+    },
+    {
+      "noradId": 41877,
+      "verifiedNoradId": 41877,
+      "alternateNoradIds": [],
+      "cosparId": "2016-074A",
+      "name": "Resourcesat-2A",
+      "alternateNames": ["RESOURCESAT-2A"],
+      "operator": "ISRO",
+      "country": "India",
+      "category": "Earth Observation",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~817 km)",
+      "status": "Operational",
+      "launchYear": 2016,
+      "missionSummary": "ISRO multispectral optical remote-sensing satellite carrying LISS-IV (~5.8 m), LISS-III (~23.5 m), and AWiFS (~56 m) cameras for agriculture, land-use, and clear-sky water monitoring.",
+      "capabilities": {
+        "sensorType": "Multispectral Optical Suite (LISS-IV, LISS-III, AWiFS)",
+        "sensorFamily": "OPTICAL_MULTISPECTRAL",
+        "allWeatherCapable": false,
+        "spatialResolution": "~5.8 m (LISS-IV), ~23.5 m (LISS-III), ~56 m (AWiFS)",
+        "spatialResolutionMeters": 5.8,
+        "revisitTime": "5-day revisit (AWiFS/LISS-IV steered) to 24-day nominal repeat",
+        "revisitDays": 5.0,
+        "coverage": "Global optical coverage with operational priority over India and South Asia",
+        "coverageRegions": ["India", "South Asia", "Global"],
+        "dataAccess": "Institutional / National portal (ISRO / NRSC Bhoonidhi)",
+        "dataAccessTier": "NATIONAL_RESTRICTED"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "agriculture_monitoring",
+          "name": "National Crop Inventory & Drought Assessment",
+          "sector": "Agriculture & Land Resources",
+          "impactSummary": "Wide-swath and medium-resolution multispectral imagery for crop acreage and drought monitoring.",
+          "dataSource": "real",
+          "sourceNote": "ISRO Resourcesat-2A mission profile"
+        },
+        {
+          "serviceId": "flood_monitoring",
+          "name": "Clear-Sky Post-Flood Water Extent Verification",
+          "sector": "Hydrology & Disaster Management",
+          "impactSummary": "Wide-swath optical verification of standing floodwaters after cloud cover clears.",
+          "dataSource": "real",
+          "sourceNote": "NRSC Bhuvan / ISRO"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 74,
+          "description": "Supports drought monitoring and clear-sky post-flood water-body assessment.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 64,
+          "description": "Three-tier optical swath architecture (5.8 m to 56 m) tailored for Indian land monitoring.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 80,
+          "description": "Long-standing baseline for state remote-sensing centres and agricultural estimates.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 45,
+          "description": "Fewer alternatives, higher criticality (inverted scale): Sentinel-2A/2B and Landsat-9 offer open medium-resolution optical overlap.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 68,
+          "description": "National land-resources monitoring infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 75,
+          "description": "High agriculture, forestry, and environmental monitoring utility.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 41877 for Resourcesat-2A / 2016-074A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.isro.gov.in/Resourcesat_2A.html",
+        "https://space.oscar.wmo.int/satellites/view/resourcesat_2a"
+      ]
+    },
+    {
+      "noradId": 40697,
+      "verifiedNoradId": 40697,
+      "alternateNoradIds": [],
+      "cosparId": "2015-028A",
+      "name": "Sentinel-2A",
+      "alternateNames": ["SENTINEL-2A"],
+      "operator": "ESA / Copernicus",
+      "country": "European Union",
+      "category": "Earth Observation",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~786 km)",
+      "status": "Operational",
+      "launchYear": 2015,
+      "missionSummary": "ESA Copernicus 13-band multispectral optical satellite providing free global 10 m–60 m imagery for land cover, agriculture, coastal water, and clear-sky disaster mapping.",
+      "capabilities": {
+        "sensorType": "MultiSpectral Instrument (MSI, 13 optical bands)",
+        "sensorFamily": "OPTICAL_MULTISPECTRAL",
+        "allWeatherCapable": false,
+        "spatialResolution": "10 m (VNIR), 20 m (Red Edge/SWIR), 60 m (atmospheric)",
+        "spatialResolutionMeters": 10.0,
+        "revisitTime": "10-day single-satellite repeat (5-day combined with Sentinel-2B)",
+        "revisitDays": 10.0,
+        "coverage": "Global land and coastal waters (including India and South Asia)",
+        "coverageRegions": ["Global", "India", "South Asia", "Europe"],
+        "dataAccess": "Open Public (Copernicus Data Space)",
+        "dataAccessTier": "OPEN_PUBLIC"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "agriculture_monitoring",
+          "name": "Open Global Crop & Vegetation Monitoring",
+          "sector": "Agriculture & Environment",
+          "impactSummary": "Free global 10 m optical time-series for vegetation, forestry, and land cover.",
+          "dataSource": "real",
+          "sourceNote": "ESA Sentinel-2 Mission Overview"
+        },
+        {
+          "serviceId": "flood_monitoring",
+          "name": "Clear-Sky Post-Flood Extent Mapping",
+          "sector": "Disaster Management",
+          "impactSummary": "Optical verification of post-event flood extent and burn scars under cloud-free skies.",
+          "dataSource": "real",
+          "sourceNote": "ESA Copernicus EMS"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 68,
+          "description": "Widely used for clear-sky post-disaster mapping (limited by clouds during storms).",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 58,
+          "description": "High-quality 13-band open optical sensor shared with Sentinel-2B/2C.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 78,
+          "description": "Broad global adoption in agriculture, forestry, and environmental monitoring.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 70,
+          "description": "Fewer alternatives, higher criticality (inverted scale): constellation peers (Sentinel-2B) and Landsat-9 provide strong optical continuity.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 50,
+          "description": "Civil public Earth-observation infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 88,
+          "description": "Massive global research and commercial geospatial ecosystem.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 40697 for Sentinel-2A / 2015-028A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://sentinel.esa.int/web/sentinel/missions/sentinel-2",
+        "https://space.oscar.wmo.int/satellites/view/sentinel_2a"
+      ]
+    },
+    {
+      "noradId": 42063,
+      "verifiedNoradId": 42063,
+      "alternateNoradIds": [],
+      "cosparId": "2017-013A",
+      "name": "Sentinel-2B",
+      "alternateNames": ["SENTINEL-2B"],
+      "operator": "ESA / Copernicus",
+      "country": "European Union",
+      "category": "Earth Observation",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~786 km)",
+      "status": "Operational",
+      "launchYear": 2017,
+      "missionSummary": "Twin ESA Copernicus 13-band multispectral optical satellite operating in complementary phase with Sentinel-2A for 5-day global land revisit.",
+      "capabilities": {
+        "sensorType": "MultiSpectral Instrument (MSI, 13 optical bands)",
+        "sensorFamily": "OPTICAL_MULTISPECTRAL",
+        "allWeatherCapable": false,
+        "spatialResolution": "10 m (VNIR), 20 m (Red Edge/SWIR), 60 m (atmospheric)",
+        "spatialResolutionMeters": 10.0,
+        "revisitTime": "10-day single-satellite repeat (5-day combined with Sentinel-2A)",
+        "revisitDays": 10.0,
+        "coverage": "Global land and coastal waters (including India and South Asia)",
+        "coverageRegions": ["Global", "India", "South Asia", "Europe"],
+        "dataAccess": "Open Public (Copernicus Data Space)",
+        "dataAccessTier": "OPEN_PUBLIC"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "agriculture_monitoring",
+          "name": "Open Global Crop & Vegetation Monitoring",
+          "sector": "Agriculture & Environment",
+          "impactSummary": "Maintains 5-day combined optical cadence with Sentinel-2A.",
+          "dataSource": "real",
+          "sourceNote": "ESA Sentinel-2 Mission Overview"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 68,
+          "description": "Supports clear-sky post-disaster assessment.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 58,
+          "description": "Twin optical payload paired with Sentinel-2A.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 76,
+          "description": "High adoption across global land and agricultural analytics.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 70,
+          "description": "Fewer alternatives, higher criticality (inverted scale): paired with Sentinel-2A and Landsat-9.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 50,
+          "description": "Civil public Earth-observation infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 86,
+          "description": "Broad scientific and commercial geospatial utility.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 42063 for Sentinel-2B / 2017-013A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://sentinel.esa.int/web/sentinel/missions/sentinel-2",
+        "https://space.oscar.wmo.int/satellites/view/sentinel_2b"
+      ]
+    },
+    {
+      "noradId": 49260,
+      "verifiedNoradId": 49260,
+      "alternateNoradIds": [],
+      "cosparId": "2021-088A",
+      "name": "Landsat-9",
+      "alternateNames": ["LANDSAT 9"],
+      "operator": "NASA / USGS",
+      "country": "United States",
+      "category": "Earth Observation",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~705 km)",
+      "status": "Operational",
+      "launchYear": 2021,
+      "missionSummary": "NASA/USGS Earth-observation satellite carrying OLI-2 multispectral optical (30 m) and TIRS-2 thermal infrared (100 m) sensors with open global archive access.",
+      "capabilities": {
+        "sensorType": "Multispectral Optical (OLI-2) + Thermal Infrared (TIRS-2)",
+        "sensorFamily": "OPTICAL_MULTISPECTRAL",
+        "allWeatherCapable": false,
+        "spatialResolution": "30 m multispectral (15 m panchromatic) and 100 m thermal IR",
+        "spatialResolutionMeters": 30.0,
+        "revisitTime": "16-day single-satellite repeat",
+        "revisitDays": 16.0,
+        "coverage": "Global land coverage (including India and South Asia)",
+        "coverageRegions": ["Global", "India", "South Asia", "North America"],
+        "dataAccess": "Open Public (USGS EarthExplorer)",
+        "dataAccessTier": "OPEN_PUBLIC"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "agriculture_monitoring",
+          "name": "Land Surface, Water & Evapotranspiration Monitoring",
+          "sector": "Hydrology & Agriculture",
+          "impactSummary": "Open calibrated optical and thermal-IR record for water resources and drought stress.",
+          "dataSource": "real",
+          "sourceNote": "USGS Landsat 9 specifications (https://www.usgs.gov/landsat-missions/landsat-9)"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 60,
+          "description": "Supports post-fire thermal/burn-scar and clear-sky flood verification.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 66,
+          "description": "Combines optical and calibrated thermal infrared bands in a 50-year climate continuity record.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 74,
+          "description": "Wide scientific, agricultural, and hydrological reliance globally.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 65,
+          "description": "Fewer alternatives, higher criticality (inverted scale): Landsat-8 and Sentinel-2 provide overlapping optical coverage.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 52,
+          "description": "Civil public land-observation infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 88,
+          "description": "Foundational global climate and environmental science archive.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 49260 for Landsat-9 / 2021-088A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.usgs.gov/landsat-missions/landsat-9",
+        "https://space.oscar.wmo.int/satellites/view/landsat_9"
+      ]
+    },
+    {
+      "noradId": 28912,
+      "verifiedNoradId": 28912,
+      "alternateNoradIds": [],
+      "cosparId": "2005-049B",
+      "name": "Meteosat-9",
+      "alternateNames": ["MSG-2", "Meteosat-9 IODC"],
+      "operator": "EUMETSAT",
+      "country": "European Union",
+      "category": "Weather",
+      "orbitRegime": "GEO",
+      "orbitSubtype": "GEO / Geostationary (~45.5 deg E IODC)",
+      "status": "Operational",
+      "launchYear": 2005,
+      "missionSummary": "EUMETSAT geostationary weather satellite providing 15-minute Indian Ocean Data Coverage (IODC) imagery over the Arabian Sea, Indian Ocean, and South Asia.",
+      "capabilities": {
+        "sensorType": "SEVIRI 12-channel Geostationary Weather Imager",
+        "sensorFamily": "GEO_MET_IMAGER_SOUNDER",
+        "allWeatherCapable": false,
+        "spatialResolution": "1 km High-Resolution Visible / 3 km IR at nadir",
+        "spatialResolutionMeters": 1000.0,
+        "revisitTime": "Continuous geostationary full-disk imaging (15-min repeat)",
+        "revisitDays": 0.01,
+        "coverage": "Indian Ocean Data Coverage (IODC): Arabian Sea, Western India, Indian Ocean, East Africa, Middle East",
+        "coverageRegions": ["Indian Ocean", "Arabian Sea", "India", "South Asia", "Middle East"],
+        "dataAccess": "Open Public / WMO meteorological sharing (EUMETSAT)",
+        "dataAccessTier": "OPEN_PUBLIC"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "cyclone_tracking",
+          "name": "Indian Ocean Geostationary Cyclone & Cloud Monitoring",
+          "sector": "Meteorology & Disaster Management",
+          "impactSummary": "15-minute geostationary weather imagery complementing INSAT over the Arabian Sea and Indian Ocean.",
+          "dataSource": "real",
+          "sourceNote": "EUMETSAT Meteosat IODC (https://www.eumetsat.int/indian-ocean-data-coverage-iodc)"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 84,
+          "description": "Regional cyclone and severe weather tracking across the western Indian Ocean.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 74,
+          "description": "15-minute IODC geostationary slot at 45.5 deg E (imager only; no INSAT SAS&R relay).",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 80,
+          "description": "Supports WMO regional meteorological centres and aviation forecasting.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 45,
+          "description": "Fewer alternatives, higher criticality (inverted scale): INSAT-3DR/3DS overlap over India, while aging 2005 hardware faces transition planning.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 65,
+          "description": "International operational meteorological infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 76,
+          "description": "Valuable aviation weather and regional climate dataset.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 28912 for Meteosat-9 / 2005-049B."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.eumetsat.int/indian-ocean-data-coverage-iodc",
+        "https://space.oscar.wmo.int/satellites/view/meteosat_9"
+      ]
+    },
+    {
+      "noradId": 41836,
+      "verifiedNoradId": 41836,
+      "alternateNoradIds": [],
+      "cosparId": "2016-064A",
+      "name": "Himawari-9",
+      "alternateNames": ["HIMAWARI-9"],
+      "operator": "Japan Meteorological Agency (JMA)",
+      "country": "Japan",
+      "category": "Weather",
+      "orbitRegime": "GEO",
+      "orbitSubtype": "GEO / Geostationary (~140.7 deg E)",
+      "status": "Operational",
+      "launchYear": 2016,
+      "missionSummary": "JMA geostationary weather satellite carrying the 16-band Advanced Himawari Imager (AHI) providing 10-minute full-disk imagery across Asia-Pacific and oblique coverage over the Bay of Bengal.",
+      "capabilities": {
+        "sensorType": "Advanced Himawari Imager (AHI, 16-band geostationary imager)",
+        "sensorFamily": "GEO_MET_IMAGER_SOUNDER",
+        "allWeatherCapable": false,
+        "spatialResolution": "0.5 km visible / 1-2 km NIR & thermal IR at nadir (oblique over India)",
+        "spatialResolutionMeters": 500.0,
+        "revisitTime": "Continuous geostationary full-disk imaging (10-min repeat)",
+        "revisitDays": 0.01,
+        "coverage": "Asia-Pacific full disk with oblique viewing over Bay of Bengal and Eastern India",
+        "coverageRegions": ["Asia-Pacific", "Bay of Bengal", "Indian Ocean", "Japan"],
+        "dataAccess": "Open Public / WMO meteorological sharing (JMA)",
+        "dataAccessTier": "OPEN_PUBLIC"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "cyclone_tracking",
+          "name": "Asia-Pacific & Bay of Bengal Cyclone Nowcasting",
+          "sector": "Meteorology & Disaster Management",
+          "impactSummary": "10-minute rapid geostationary cloud and cyclone tracking (oblique geometry over western India).",
+          "dataSource": "real",
+          "sourceNote": "JMA Himawari-8/9 technical specifications"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 90,
+          "description": "High-frequency typhoon, cyclone, and volcanic ash nowcasting across Asia-Pacific.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 82,
+          "description": "16-band 10-minute geostationary imager at 140.7 deg E.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 86,
+          "description": "Primary East Asian / Western Pacific meteorological service backbone.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 40,
+          "description": "Fewer alternatives, higher criticality (inverted scale): Himawari-8 standby and neighboring GEO satellites provide partial regional overlap.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 74,
+          "description": "Critical Japanese and regional meteorological infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 84,
+          "description": "High aviation, maritime, and atmospheric science utility.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 41836 for Himawari-9 / 2016-064A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.data.jma.go.jp/mscweb/en/himawari89/space_segment/spsg_sample.html",
+        "https://space.oscar.wmo.int/satellites/view/himawari_9"
+      ]
+    },
+    {
+      "noradId": 43013,
+      "verifiedNoradId": 43013,
+      "alternateNoradIds": [],
+      "cosparId": "2017-073A",
+      "name": "NOAA-20",
+      "alternateNames": ["JPSS-1"],
+      "operator": "NOAA / NASA",
+      "country": "United States",
+      "category": "Weather",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~824 km)",
+      "status": "Operational",
+      "launchYear": 2017,
+      "missionSummary": "NOAA/NASA polar-orbiting operational weather satellite carrying VIIRS optical/thermal imager (375 m) and CrIS/ATMS atmospheric sounders supporting global numerical weather prediction and ocean SST monitoring.",
+      "capabilities": {
+        "sensorType": "Polar-orbiting VIIRS imager + CrIS/ATMS microwave & IR atmospheric sounders",
+        "sensorFamily": "POLAR_MET_SOUNDER",
+        "allWeatherCapable": true,
+        "spatialResolution": "375 m–750 m VIIRS imagery; wide-swath atmospheric sounding",
+        "spatialResolutionMeters": 375.0,
+        "revisitTime": "Twice-daily global polar coverage (~0.5 days; NOT continuous geostationary)",
+        "revisitDays": 0.5,
+        "coverage": "Global polar-orbiting coverage (including India and Indian Ocean)",
+        "coverageRegions": ["Global", "India", "South Asia", "Indian Ocean", "Bay of Bengal", "Arabian Sea"],
+        "dataAccess": "Open Public (NOAA / NASA / WMO)",
+        "dataAccessTier": "OPEN_PUBLIC"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "weather_forecasting",
+          "name": "Global Numerical Weather Prediction Sounding",
+          "sector": "Meteorology",
+          "impactSummary": "Microwave and IR atmospheric profiles feeding medium-range storm track models.",
+          "dataSource": "real",
+          "sourceNote": "NOAA JPSS / NOAA-20 mission documentation"
+        },
+        {
+          "serviceId": "maritime_safety",
+          "name": "Global Sea Surface Temperature & Ocean Color",
+          "sector": "Marine Meteorology",
+          "impactSummary": "Wide-swath VIIRS SST and ocean-color observations complementing OCEANSAT-3.",
+          "dataSource": "real",
+          "sourceNote": "NOAA NESDIS / WMO OSCAR"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 82,
+          "description": "Feeds global storm track models and active-fire/flood composites.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 78,
+          "description": "High-accuracy polar-orbiting VIIRS + microwave/IR sounding suite.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 84,
+          "description": "Key assimilation input for global and regional NWP centres.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 55,
+          "description": "Fewer alternatives, higher criticality (inverted scale): NOAA-21 and MetOp satellites provide complementary polar meteorological orbits.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 70,
+          "description": "Core operational meteorological satellite infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 86,
+          "description": "Extensive climate, marine, and atmospheric research utility.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 43013 for NOAA-20 / 2017-073A."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.nesdis.noaa.gov/our-satellites/currently-flying/joint-polar-satellite-system",
+        "https://space.oscar.wmo.int/satellites/view/noaa_20"
+      ]
+    },
+    {
+      "noradId": 62701,
+      "verifiedNoradId": 62701,
+      "alternateNoradIds": [],
+      "cosparId": "2025-009K",
+      "name": "Firefly-1",
+      "alternateNames": ["FF01", "Pixxel Firefly-1"],
+      "operator": "Pixxel",
+      "country": "India",
+      "category": "Earth Observation",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous",
+      "status": "Operational",
+      "launchYear": 2025,
+      "missionSummary": "Commercial hyperspectral imaging small satellite built by Indian startup Pixxel, capturing 135+ spectral bands for precision agriculture, water quality, and environmental analytics.",
+      "capabilities": {
+        "sensorType": "Commercial Hyperspectral Imager (135+ spectral bands)",
+        "sensorFamily": "HYPERSPECTRAL",
+        "allWeatherCapable": false,
+        "spatialResolution": "~5 m class commercial hyperspectral (public startup specification)",
+        "spatialResolutionMeters": 5.0,
+        "revisitTime": "Tasked commercial constellation cadence (exact single-sat revisit unverified)",
+        "revisitDays": null,
+        "coverage": "Global tasked commercial imaging (including India)",
+        "coverageRegions": ["India", "South Asia", "Global"],
+        "dataAccess": "Commercial / Licensed tasking",
+        "dataAccessTier": "COMMERCIAL"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "agriculture_monitoring",
+          "name": "Commercial Hyperspectral Crop & Environmental Analytics",
+          "sector": "AgriTech & Environment",
+          "impactSummary": "Narrow-band spectral analytics for crop stress, mineral, and water-quality monitoring.",
+          "dataSource": "real",
+          "sourceNote": "Pixxel Firefly public launch announcements (2025)"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 35,
+          "description": "Primarily commercial environmental analytics rather than core public emergency response.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 78,
+          "description": "High-resolution 135+ band commercial hyperspectral imaging.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 45,
+          "description": "Commercial customer tasking workflows rather than life-safety national infrastructure.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 40,
+          "description": "Fewer alternatives, higher criticality (inverted scale): sibling Firefly constellation units exist, though 5 m hyperspectral peers are limited.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 30,
+          "description": "Private startup commercial Earth-observation asset.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 75,
+          "description": "Strong commercial AgriTech and environmental remote-sensing value.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Public orbital catalog NORAD ID 62701 (Firefly-1 / 2025-009K)."
+        },
+        "capabilities.revisitTime": {
+          "dataSource": "mock",
+          "sourceNote": "Generic tasked cadence description; exact single-satellite revisit not publicly verified."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.pixxel.space/",
+        "Public orbital catalog (NORAD 62701)"
+      ]
+    },
+    {
+      "noradId": 58989,
+      "verifiedNoradId": 58989,
+      "alternateNoradIds": [],
+      "cosparId": "2024-032C",
+      "name": "TIRSAT",
+      "alternateNames": ["TIRSAT 3U CubeSat"],
+      "operator": "University of Fukui / Japanese Space Consortium",
+      "country": "Japan",
+      "category": "Scientific / Student",
+      "orbitRegime": "LEO",
+      "orbitSubtype": "LEO / Sun-synchronous (~660 km)",
+      "status": "Operational",
+      "launchYear": 2024,
+      "missionSummary": "3U university-linked experimental Earth-observation CubeSat launched in February 2024 demonstrating a miniaturized hyperspectral camera for agricultural and forestry research.",
+      "capabilities": {
+        "sensorType": "Miniaturized LVBPF Hyperspectral CubeSat Camera",
+        "sensorFamily": "HYPERSPECTRAL",
+        "allWeatherCapable": false,
+        "spatialResolution": "Experimental 3U CubeSat optical resolution (exact operational GSD unverified)",
+        "spatialResolutionMeters": null,
+        "revisitTime": "Experimental research pass schedule (unverified nominal cadence)",
+        "revisitDays": null,
+        "coverage": "Global sun-synchronous orbit with academic research focus",
+        "coverageRegions": ["Japan", "Asia-Pacific", "Global"],
+        "dataAccess": "Research / Academic",
+        "dataAccessTier": "ACADEMIC"
+      },
+      "supportedServices": [
+        {
+          "serviceId": "academic_cubesat_rd",
+          "name": "University CubeSat Remote-Sensing Demonstration",
+          "sector": "Research & Education",
+          "impactSummary": "On-orbit validation of miniaturized optical filters for student and academic research.",
+          "dataSource": "real",
+          "sourceNote": "Nanosats Database / MDPI TIRSAT publication (2024)"
+        }
+      ],
+      "criticalityInputs": {
+        "disasterMonitoringSupport": {
+          "value": 10,
+          "description": "Experimental university CubeSat with no operational emergency-response role.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "uniqueCapability": {
+          "value": 35,
+          "description": "Compact university LVBPF optical filter demonstration.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "serviceDependency": {
+          "value": 15,
+          "description": "Limited to academic payload researchers.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "availabilityOfAlternatives": {
+          "value": 75,
+          "description": "Fewer alternatives, higher criticality (inverted scale): operational multispectral/hyperspectral missions cover similar Earth targets.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "nationalInfrastructureDefence": {
+          "value": 10,
+          "description": "University technology demonstrator.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        },
+        "commercialScientificValue": {
+          "value": 45,
+          "description": "Moderate academic research and student engineering training value.",
+          "dataSource": "mock",
+          "sourceNote": "Analytical rule_based_v1 factor input."
+        }
+      },
+      "dataSource": "real",
+      "fieldProvenance": {
+        "noradId": {
+          "dataSource": "real",
+          "sourceNote": "Verified NORAD ID 58989 for TIRSAT / 2024-032C."
+        },
+        "capabilities.spatialResolution": {
+          "dataSource": "mock",
+          "sourceNote": "Generic experimental description; exact operational GSD not verified."
+        },
+        "criticalityInputs": {
+          "dataSource": "mock",
+          "sourceNote": "Rule-based analytical inputs (0-100); not published orbital telemetry."
+        }
+      },
+      "sources": [
+        "https://www.nanosats.eu/sat/tirsat",
+        "Public orbital catalog (NORAD 58989)"
+      ]
+    }
+  ]
+}
