@@ -1,512 +1,453 @@
-"""Earth-Level Service Disruption & Alternative Satellite Continuity Engine.
+"""Alternative Satellite Finder & Redundancy Gap Analysis Engine.
 
-Evaluates:
-1. Terrestrial services at risk of degradation or unavailability if a satellite is affected.
-2. Concrete redundancy gaps (e.g., all-weather SAR gap, sovereign vs. external tasking,
-   revisit cadence & spatial resolution degradation).
-3. Candidate alternative satellites queried automatically from the mission database,
-   strictly avoiding the fallacy that a similar mission is an automatic 1:1 replacement.
+Compares satellites within similar mission categories (and complementary Earth-service
+capabilities) across five explicit dimensions:
+1. sensorType         (max 35 pts)
+2. spatialResolution  (max 20 pts)
+3. revisitTime        (max 15 pts)
+4. coverage           (max 15 pts)
+5. dataAccess         (max 15 pts)
+
+capabilityMatch (0-100) is capped at 95 because no external or peer spacecraft is an
+automatic one-to-one operational replacement (orbital phasing, tasking, and calibration
+always differ). Always returns explicit limitations, plain-word redundancyGaps, and
+the canonical contract caveat.
 """
 
 from __future__ import annotations
 
 from typing import Optional
 
+from .config import ALTERNATIVE_CAVEAT_TEXT, ALTERNATIVE_MATCH_WEIGHTS
 from .database import MissionDatabase
 from .schemas import (
-    ActiveEarthEvent,
-    AlternativeMatchClass,
-    AlternativeSatelliteRecommendation,
-    ContinuityAnalysisResponse,
-    DataProvenance,
-    RedundancyGap,
-    SatelliteMission,
-    SensorModality,
-    ServiceDisruptionItem,
-    SeverityTier,
+    AlternativeCandidate,
+    AlternativesResponse,
+    FieldComparisonItem,
+    SatelliteRecord,
 )
-from .scoring_engine import EVENT_SERVICE_MAP
 
-# Symmetric compatibility matrix between sensor modalities (1.0 = exact same physical modality)
-MODALITY_COMPATIBILITY: dict[tuple[SensorModality, SensorModality], float] = {
-    (SensorModality.SAR_C_BAND, SensorModality.SAR_C_BAND): 1.00,
-    (SensorModality.SAR_C_BAND, SensorModality.SAR_L_BAND): 0.78,
-    (SensorModality.SAR_L_BAND, SensorModality.SAR_L_BAND): 1.00,
-    (SensorModality.SAR_C_BAND, SensorModality.GNSS_R): 0.35,
-    (SensorModality.SAR_C_BAND, SensorModality.OPTICAL_MULTISPECTRAL): 0.28,
-    (SensorModality.SAR_L_BAND, SensorModality.OPTICAL_MULTISPECTRAL): 0.25,
-    (SensorModality.OPTICAL_VHR, SensorModality.OPTICAL_VHR): 1.00,
-    (SensorModality.OPTICAL_VHR, SensorModality.OPTICAL_MULTISPECTRAL): 0.55,
-    (SensorModality.OPTICAL_MULTISPECTRAL, SensorModality.OPTICAL_MULTISPECTRAL): 1.00,
-    (SensorModality.OPTICAL_MULTISPECTRAL, SensorModality.HYPERSPECTRAL): 0.65,
-    (SensorModality.HYPERSPECTRAL, SensorModality.HYPERSPECTRAL): 1.00,
-    (SensorModality.THERMAL_IR, SensorModality.THERMAL_IR): 1.00,
-    (SensorModality.THERMAL_IR, SensorModality.GEO_IMAGER_SOUNDER): 0.45,
-    (SensorModality.GEO_IMAGER_SOUNDER, SensorModality.GEO_IMAGER_SOUNDER): 1.00,
-    (SensorModality.SCATTEROMETER, SensorModality.SCATTEROMETER): 1.00,
-    (SensorModality.SCATTEROMETER, SensorModality.GNSS_R): 0.45,
-    (SensorModality.OCEAN_COLOR, SensorModality.OCEAN_COLOR): 1.00,
-    (SensorModality.OCEAN_COLOR, SensorModality.OPTICAL_MULTISPECTRAL): 0.40,
-    (SensorModality.COMMS_TRANSPONDER, SensorModality.COMMS_TRANSPONDER): 1.00,
-    (SensorModality.PNT_NAVIGATION, SensorModality.PNT_NAVIGATION): 1.00,
-    (SensorModality.SEARCH_AND_RESCUE, SensorModality.SEARCH_AND_RESCUE): 1.00,
+# Sensor-family compatibility fraction (0.0 .. 1.0)
+SENSOR_FAMILY_COMPATIBILITY: dict[tuple[str, str], float] = {
+    ("SAR_C_BAND", "SAR_C_BAND"): 1.00,
+    ("SAR_C_BAND", "SAR_L_BAND"): 0.78,
+    ("SAR_L_BAND", "SAR_L_BAND"): 1.00,
+    ("SAR_C_BAND", "OPTICAL_MULTISPECTRAL"): 0.25,
+    ("SAR_C_BAND", "OPTICAL_VHR"): 0.25,
+    ("OPTICAL_VHR", "OPTICAL_VHR"): 1.00,
+    ("OPTICAL_VHR", "OPTICAL_MULTISPECTRAL"): 0.65,
+    ("OPTICAL_VHR", "HYPERSPECTRAL"): 0.55,
+    ("OPTICAL_MULTISPECTRAL", "OPTICAL_MULTISPECTRAL"): 1.00,
+    ("OPTICAL_MULTISPECTRAL", "HYPERSPECTRAL"): 0.75,
+    ("HYPERSPECTRAL", "HYPERSPECTRAL"): 1.00,
+    ("OCEAN_MULTI_SENSOR", "OCEAN_MULTI_SENSOR"): 1.00,
+    ("OCEAN_MULTI_SENSOR", "POLAR_MET_SOUNDER"): 0.65,
+    ("OCEAN_MULTI_SENSOR", "OPTICAL_MULTISPECTRAL"): 0.40,
+    ("GEO_MET_IMAGER_SOUNDER", "GEO_MET_IMAGER_SOUNDER"): 1.00,
+    ("GEO_MET_IMAGER_SOUNDER", "POLAR_MET_SOUNDER"): 0.50,
+    ("POLAR_MET_SOUNDER", "POLAR_MET_SOUNDER"): 1.00,
+    ("IONOSPHERIC_BEACON", "IONOSPHERIC_BEACON"): 1.00,
 }
 
-SAR_MODALITIES = {SensorModality.SAR_C_BAND, SensorModality.SAR_L_BAND}
+# Related mission categories allowed as secondary cross-category candidates
+RELATED_CATEGORIES: dict[str, set[str]] = {
+    "Earth Observation": {"Earth Observation", "Disaster Monitoring", "Weather"},
+    "Disaster Monitoring": {"Disaster Monitoring", "Earth Observation"},
+    "Weather": {"Weather", "Earth Observation"},
+    "Scientific / Student": {"Scientific / Student", "Earth Observation"},
+}
 
 
-def _modality_similarity(a: SensorModality, b: SensorModality) -> float:
+def _sensor_similarity(a: str, b: str) -> float:
     if a == b:
         return 1.0
-    return MODALITY_COMPATIBILITY.get((a, b), MODALITY_COMPATIBILITY.get((b, a), 0.0))
+    return SENSOR_FAMILY_COMPATIBILITY.get((a, b), SENSOR_FAMILY_COMPATIBILITY.get((b, a), 0.0))
 
 
-def _best_resolution_m(mission: SatelliteMission) -> Optional[float]:
-    resolutions = [s.spatial_resolution_m for s in mission.sensors if s.spatial_resolution_m is not None]
-    return min(resolutions) if resolutions else None
+def _compare_sensor(
+    target: SatelliteRecord, candidate: SatelliteRecord
+) -> tuple[FieldComparisonItem, Optional[str]]:
+    max_pts = ALTERNATIVE_MATCH_WEIGHTS["sensorType"]
+    sim = _sensor_similarity(target.capabilities.sensorFamily, candidate.capabilities.sensorFamily)
+    pts = int(round(max_pts * sim))
+
+    limitation: Optional[str] = None
+    if sim >= 0.95:
+        status = "MATCH"
+    elif sim >= 0.55:
+        status = "PARTIAL"
+        limitation = (
+            f"Different sensor architecture ({candidate.capabilities.sensorType} vs. "
+            f"{target.capabilities.sensorType}); calibration or processing changes required."
+        )
+    else:
+        status = "GAP"
+        limitation = (
+            f"Different sensor modality ({candidate.capabilities.sensorType} vs. "
+            f"{target.capabilities.sensorType})."
+        )
+
+    if target.capabilities.allWeatherCapable and not candidate.capabilities.allWeatherCapable:
+        status = "GAP" if sim < 0.55 else "PARTIAL"
+        limitation = (
+            "No all-weather cloud penetration: candidate optical/IR sensor is blocked by dense monsoon "
+            "or cyclone cloud cover."
+        )
+
+    return (
+        FieldComparisonItem(
+            field="sensorType",
+            label="Sensor type",
+            targetValue=target.capabilities.sensorType,
+            alternativeValue=candidate.capabilities.sensorType,
+            matchPoints=pts,
+            maxPoints=max_pts,
+            comparisonStatus=status,  # type: ignore[arg-type]
+            limitationNote=limitation,
+        ),
+        limitation,
+    )
 
 
-def _compare_resolutions(target: SatelliteMission, candidate: SatelliteMission) -> tuple[str, Optional[str]]:
-    t_res = _best_resolution_m(target)
-    c_res = _best_resolution_m(candidate)
+def _compare_resolution(
+    target: SatelliteRecord, candidate: SatelliteRecord
+) -> tuple[FieldComparisonItem, Optional[str]]:
+    max_pts = ALTERNATIVE_MATCH_WEIGHTS["spatialResolution"]
+    t_res = target.capabilities.spatialResolutionMeters
+    c_res = candidate.capabilities.spatialResolutionMeters
+
+    limitation: Optional[str] = None
     if t_res is None or c_res is None:
-        return (
-            "Spatial resolution comparison unavailable (one or both sensors lack comparable public GSD figures).",
-            None,
+        pts = int(round(max_pts * 0.5))
+        status = "PARTIAL"
+        limitation = "Spatial resolution cannot be directly compared from verified public specifications."
+    elif c_res <= t_res * 1.25:
+        pts = max_pts
+        status = "MATCH"
+    elif c_res <= t_res * 4.0:
+        pts = int(round(max_pts * 0.65))
+        status = "PARTIAL"
+        limitation = (
+            f"Lower spatial resolution (~{c_res:g} m vs. target ~{t_res:g} m nominal finest mode)."
         )
-    if c_res <= t_res * 1.15:
-        return (
-            f"Comparable or finer public nominal resolution (candidate ~{c_res:g} m vs. target ~{t_res:g} m; mode-dependent).",
-            None,
+    else:
+        pts = int(round(max_pts * 0.25))
+        status = "GAP"
+        limitation = (
+            f"Significantly lower spatial resolution (~{c_res:g} m vs. target ~{t_res:g} m); "
+            "cannot resolve fine-scale infrastructure damage."
         )
-    ratio = c_res / t_res if t_res > 0 else 1.0
-    gap = (
-        f"Coarser best nominal resolution than {target.name} "
-        f"(candidate ~{c_res:g} m vs. target ~{t_res:g} m, ~{ratio:.1f}x coarser in finest mode)."
+
+    return (
+        FieldComparisonItem(
+            field="spatialResolution",
+            label="Spatial resolution",
+            targetValue=target.capabilities.spatialResolution,
+            alternativeValue=candidate.capabilities.spatialResolution,
+            matchPoints=pts,
+            maxPoints=max_pts,
+            comparisonStatus=status,  # type: ignore[arg-type]
+            limitationNote=limitation,
+        ),
+        limitation,
     )
-    return (gap, gap)
 
 
-def _compare_revisit(target: SatelliteMission, candidate: SatelliteMission) -> tuple[str, Optional[str]]:
-    t_rev = target.revisit_time_days
-    c_rev = candidate.revisit_time_days
-    if t_rev is None or c_rev is None:
-        return (
-            "Nominal revisit comparison incomplete (public revisit interval unverified for one mission).",
-            "Revisit cadence over target area cannot be guaranteed from public metadata alone.",
+def _compare_revisit(
+    target: SatelliteRecord, candidate: SatelliteRecord
+) -> tuple[FieldComparisonItem, Optional[str]]:
+    max_pts = ALTERNATIVE_MATCH_WEIGHTS["revisitTime"]
+    t_rev = target.capabilities.revisitDays
+    c_rev = candidate.capabilities.revisitDays
+
+    limitation: Optional[str] = None
+    if target.orbitRegime == "GEO" and candidate.orbitRegime != "GEO":
+        pts = int(round(max_pts * 0.25))
+        status = "GAP"
+        limitation = (
+            "Slower revisit / orbit mismatch: target provides continuous geostationary viewing, "
+            "whereas candidate operates in polar LEO with intermittent passes."
         )
-    if target.orbit_regime.value == "GEO" and candidate.orbit_regime.value != "GEO":
-        gap = (
-            f"Orbit regime mismatch: {target.name} provides continuous geostationary viewing "
-            f"(~{t_rev:g} day refresh), whereas {candidate.name} is polar/LEO (~{c_rev:g} day revisit)."
-        )
-        return (gap, gap)
-    if c_rev <= t_rev * 1.15:
-        return (
-            f"Comparable or faster nominal repeat cycle (candidate ~{c_rev:g} days vs. target ~{t_rev:g} days; pass timing still differs).",
-            None,
-        )
-    gap = (
-        f"Longer nominal repeat cycle than {target.name} "
-        f"(candidate ~{c_rev:g} days vs. target ~{t_rev:g} days)."
+    elif t_rev is None or c_rev is None:
+        pts = int(round(max_pts * 0.5))
+        status = "PARTIAL"
+        limitation = "Nominal revisit cadence is not fully verified for direct comparison."
+    elif c_rev <= t_rev * 1.2:
+        pts = max_pts
+        status = "MATCH"
+    elif c_rev <= t_rev * 2.5:
+        pts = int(round(max_pts * 0.6))
+        status = "PARTIAL"
+        limitation = f"Slower nominal revisit (~{c_rev:g} days vs. target ~{t_rev:g} days)."
+    else:
+        pts = int(round(max_pts * 0.3))
+        status = "GAP"
+        limitation = f"Much slower nominal revisit (~{c_rev:g} days vs. target ~{t_rev:g} days)."
+
+    return (
+        FieldComparisonItem(
+            field="revisitTime",
+            label="Revisit time",
+            targetValue=target.capabilities.revisitTime,
+            alternativeValue=candidate.capabilities.revisitTime,
+            matchPoints=pts,
+            maxPoints=max_pts,
+            comparisonStatus=status,  # type: ignore[arg-type]
+            limitationNote=limitation,
+        ),
+        limitation,
     )
-    return (gap, gap)
 
 
-def analyze_service_disruptions(
-    mission: Optional[SatelliteMission],
-    active_earth_events: Optional[list[ActiveEarthEvent]] = None,
-) -> list[ServiceDisruptionItem]:
-    """Identify Earth-level services vulnerable to degradation or unavailability."""
-    if mission is None:
-        return []
+def _compare_coverage(
+    target: SatelliteRecord, candidate: SatelliteRecord
+) -> tuple[FieldComparisonItem, Optional[str]]:
+    max_pts = ALTERNATIVE_MATCH_WEIGHTS["coverage"]
+    t_regions = {r.lower() for r in target.capabilities.coverageRegions}
+    c_regions = {r.lower() for r in candidate.capabilities.coverageRegions}
 
-    elevated_service_ids: set[str] = set()
-    for ev in active_earth_events or []:
-        elevated_service_ids.update(EVENT_SERVICE_MAP.get(ev.event_type, set()))
+    limitation: Optional[str] = None
+    if "global" in c_regions:
+        overlap_ratio = 0.90 if "india" in t_regions and "india" not in c_regions else 1.0
+    else:
+        specific_target = t_regions - {"global"}
+        if not specific_target:
+            overlap_ratio = 0.7
+        else:
+            overlap_ratio = len(specific_target.intersection(c_regions)) / len(specific_target)
 
-    disruptions: list[ServiceDisruptionItem] = []
-    for dep in mission.active_service_dependencies:
-        is_elevated = dep.service_id in elevated_service_ids
-        severity = dep.criticality_tier
-        if is_elevated and severity == SeverityTier.HIGH:
-            severity = SeverityTier.CRITICAL
-        elif is_elevated and severity == SeverityTier.MODERATE:
-            severity = SeverityTier.HIGH
-
-        disruptions.append(
-            ServiceDisruptionItem(
-                service_id=dep.service_id,
-                service_name=dep.service_name,
-                severity=severity,
-                dependent_sectors=dep.dependent_sectors,
-                potential_impact=dep.disruption_consequence,
-                elevated_by_active_event=is_elevated,
-            )
+    pts = int(round(max_pts * overlap_ratio))
+    if overlap_ratio >= 0.85:
+        status = "MATCH"
+    elif overlap_ratio >= 0.45:
+        status = "PARTIAL"
+        limitation = (
+            f"Different geographic coverage focus ({candidate.capabilities.coverage}); "
+            "viewing geometry over primary target region may be partial or oblique."
         )
+    else:
+        status = "GAP"
+        limitation = f"Limited geographic coverage overlap ({candidate.capabilities.coverage})."
 
-    severity_rank = {
-        SeverityTier.CRITICAL: 0,
-        SeverityTier.HIGH: 1,
-        SeverityTier.MODERATE: 2,
-        SeverityTier.LOW: 3,
-    }
-    return sorted(disruptions, key=lambda d: (severity_rank[d.severity], not d.elevated_by_active_event))
+    return (
+        FieldComparisonItem(
+            field="coverage",
+            label="Coverage",
+            targetValue=target.capabilities.coverage,
+            alternativeValue=candidate.capabilities.coverage,
+            matchPoints=pts,
+            maxPoints=max_pts,
+            comparisonStatus=status,  # type: ignore[arg-type]
+            limitationNote=limitation,
+        ),
+        limitation,
+    )
 
 
-def find_alternative_satellites(
-    target: SatelliteMission,
+def _compare_data_access(
+    target: SatelliteRecord, candidate: SatelliteRecord
+) -> tuple[FieldComparisonItem, Optional[str]]:
+    max_pts = ALTERNATIVE_MATCH_WEIGHTS["dataAccess"]
+    same_operator = candidate.operator.lower() == target.operator.lower()
+    tier = candidate.capabilities.dataAccessTier
+
+    limitation: Optional[str] = None
+    if same_operator:
+        pts = max_pts
+        status = "MATCH"
+    elif tier == "OPEN_PUBLIC":
+        pts = int(round(max_pts * 0.80))
+        status = "PARTIAL"
+        limitation = (
+            f"External operator ({candidate.operator}); open public archive removes licensing cost, "
+            "but acquisition schedules cannot be domestically tasked on demand."
+        )
+    elif tier == "CHARTER_TASKED":
+        pts = int(round(max_pts * 0.55))
+        status = "PARTIAL"
+        limitation = (
+            f"Restricted external access ({candidate.capabilities.dataAccess}); requires International "
+            "Charter activation or partner tasking lead time."
+        )
+    elif tier == "COMMERCIAL":
+        pts = int(round(max_pts * 0.45))
+        status = "GAP"
+        limitation = (
+            f"Commercial licensed access ({candidate.operator}); requires procurement agreement and "
+            "commercial tasking windows."
+        )
+    else:
+        pts = int(round(max_pts * 0.40))
+        status = "GAP"
+        limitation = f"Restricted or institutional access ({candidate.capabilities.dataAccess})."
+
+    return (
+        FieldComparisonItem(
+            field="dataAccess",
+            label="Data access",
+            targetValue=target.capabilities.dataAccess,
+            alternativeValue=candidate.capabilities.dataAccess,
+            matchPoints=pts,
+            maxPoints=max_pts,
+            comparisonStatus=status,  # type: ignore[arg-type]
+            limitationNote=limitation,
+        ),
+        limitation,
+    )
+
+
+def find_alternatives(
+    target: SatelliteRecord,
     db: MissionDatabase,
     *,
     max_results: int = 5,
-) -> list[AlternativeSatelliteRecommendation]:
-    """Query mission database for overlapping backup satellites with explicit gap analysis."""
-    target_modalities = [s.modality for s in target.sensors]
-    target_services = {dep.service_id for dep in target.active_service_dependencies}
-    target_regions = {r.lower() for r in target.coverage_regions}
-    target_all_weather = any(s.all_weather_capable for s in target.sensors)
+) -> AlternativesResponse:
+    """Compare target satellite against mission catalog and return alternatives + redundancy gaps."""
+    allowed_categories = RELATED_CATEGORIES.get(target.category, {target.category})
+    target_services = {s.serviceId for s in target.supportedServices}
 
-    recommendations: list[AlternativeSatelliteRecommendation] = []
-
-    for candidate in db.list_all():
-        if candidate.norad_id == target.norad_id:
+    candidates: list[AlternativeCandidate] = []
+    for cand in db.list_all():
+        if cand.noradId == target.noradId:
+            continue
+        if cand.status == "Inactive":
             continue
 
-        cand_modalities = [s.modality for s in candidate.sensors]
-        cand_services = {dep.service_id for dep in candidate.active_service_dependencies}
-        cand_regions = {r.lower() for r in candidate.coverage_regions}
-
-        # 1. Sensor modality overlap (average best match for each target sensor)
-        sensor_scores: list[float] = []
-        matching_modalities: set[str] = set()
-        for t_mod in target_modalities:
-            best_for_t = 0.0
-            for c_mod in cand_modalities:
-                sim = _modality_similarity(t_mod, c_mod)
-                if sim > best_for_t:
-                    best_for_t = sim
-                if sim >= 0.40:
-                    matching_modalities.add(c_mod.value)
-            sensor_scores.append(best_for_t)
-        sensor_overlap = round(sum(sensor_scores) / len(sensor_scores), 3) if sensor_scores else 0.0
-
-        # 2. Service dependency overlap
-        shared_services = sorted(target_services.intersection(cand_services))
-        service_overlap = (
-            round(len(shared_services) / len(target_services), 3) if target_services else 0.0
+        same_cat = cand.category == target.category
+        related_cat = cand.category in allowed_categories
+        cand_services = {s.serviceId for s in cand.supportedServices}
+        shared_services = target_services.intersection(cand_services)
+        sensor_sim = _sensor_similarity(
+            target.capabilities.sensorFamily, cand.capabilities.sensorFamily
         )
 
-        # Skip completely unrelated satellites (e.g., navigation sat as backup for SAR flood sat)
-        if sensor_overlap < 0.25 and service_overlap == 0.0:
+        # Must share mission category OR have meaningful sensor/service overlap
+        if not same_cat and not (related_cat and (sensor_sim >= 0.40 or shared_services)):
             continue
-        if sensor_overlap < 0.20:
-            continue
-
-        # 3. Geographic coverage overlap
-        if "global" in cand_regions:
-            overlapping_regions = list(target.coverage_regions)
-            coverage_overlap = 0.90 if "global" not in target_regions else 1.0
-        else:
-            common = sorted(
-                r for r in target.coverage_regions if r.lower() in cand_regions
-            )
-            overlapping_regions = common
-            coverage_overlap = (
-                round(len(common) / max(1, len(target_regions - {"global"})), 3)
-                if common
-                else 0.0
-            )
-
-        if coverage_overlap == 0.0:
+        if sensor_sim == 0.0 and not shared_services and not same_cat:
             continue
 
-        # 4. Composite compatibility score (weighted toward physical sensor capability)
-        is_peer = candidate.norad_id in target.constellation_peers
-        same_country = candidate.country.lower() == target.country.lower()
-        peer_bonus = 0.08 if is_peer else (0.04 if same_country else 0.0)
-        compatibility = round(
-            min(
-                0.98,  # Never 1.00 — orbital phasing/pass timing always differs
-                0.50 * sensor_overlap
-                + 0.30 * service_overlap
-                + 0.20 * coverage_overlap
-                + peer_bonus,
-            ),
-            3,
-        )
-
-        # Collect concrete gaps & limitations (Scientific Rule: similar != full replacement)
-        gaps: list[str] = []
-        cand_all_weather = any(s.all_weather_capable for s in candidate.sensors)
-
-        if target_all_weather and not cand_all_weather:
-            gaps.append(
-                "CRITICAL ALL-WEATHER GAP: Candidate relies on optical/IR sensing and cannot penetrate "
-                "dense monsoon or cyclone cloud cover like radar (SAR)."
-            )
-
-        if any(m == SensorModality.SAR_C_BAND for m in target_modalities) and any(
-            m == SensorModality.SAR_L_BAND for m in cand_modalities
+        comparisons: list[FieldComparisonItem] = []
+        limitations: list[str] = []
+        for fn in (
+            _compare_sensor,
+            _compare_resolution,
+            _compare_revisit,
+            _compare_coverage,
+            _compare_data_access,
         ):
-            gaps.append(
-                "Radar frequency difference (L-band vs. C-band): backscatter calibration and existing "
-                "C-band flood-extraction pipelines require adaptation."
+            item, lim = fn(target, cand)
+            comparisons.append(item)
+            if lim:
+                limitations.append(lim)
+
+        raw_match = sum(c.matchPoints for c in comparisons)
+        # Never report 100% — orbital phasing and operational control never give a true 1:1 drop-in
+        capability_match = max(0, min(95, raw_match))
+
+        if capability_match < 30:
+            continue
+
+        if not limitations:
+            limitations.append(
+                "Orbital slot or pass timing differs from the target satellite; scheduling coordination is still required."
             )
 
-        if any(m == SensorModality.SEARCH_AND_RESCUE for m in target_modalities) and not any(
-            m == SensorModality.SEARCH_AND_RESCUE for m in cand_modalities
-        ):
-            gaps.append(
-                "Does not carry domestic Satellite-Aided Search & Rescue (SAS&R) or Data Relay Transponders."
-            )
-
-        res_comparison, res_gap = _compare_resolutions(target, candidate)
-        if res_gap:
-            gaps.append(res_gap)
-
-        rev_comparison, rev_gap = _compare_revisit(target, candidate)
-        if rev_gap:
-            gaps.append(rev_gap)
-
-        if not same_country:
-            if "Open Public" in candidate.data_access_model:
-                gaps.append(
-                    f"External operator ({candidate.operator}); open public archive avoids licensing delays, "
-                    "but acquisition schedules cannot be domestically tasked."
-                )
-            else:
-                gaps.append(
-                    f"External operator ({candidate.operator}, {candidate.data_access_model}); "
-                    "requires International Disaster Charter activation or commercial tasking agreements."
-                )
-
-        if is_peer:
-            gaps.append(
-                "Same-constellation peer shares sensor architecture, but orbital slot/pass timing differs "
-                "and losing one spacecraft still reduces overall constellation revisit cadence."
-            )
-
-        if is_peer and sensor_overlap >= 0.85:
-            match_class = AlternativeMatchClass.SAME_CONSTELLATION_PEER
-        elif compatibility >= 0.72 and (not target_all_weather or cand_all_weather):
-            match_class = AlternativeMatchClass.STRONG_PARTIAL_ALTERNATIVE
-        elif compatibility >= 0.45:
-            match_class = AlternativeMatchClass.PARTIAL_CAPABILITY_MATCH
-        else:
-            match_class = AlternativeMatchClass.COMPLEMENTARY_SUPPORT_ONLY
-
-        recommendations.append(
-            AlternativeSatelliteRecommendation(
-                norad_id=candidate.norad_id,
-                name=candidate.name,
-                operator=candidate.operator,
-                country=candidate.country,
-                mission_type=candidate.mission_type,
-                match_class=match_class,
-                compatibility_score=compatibility,
-                sensor_overlap_score=sensor_overlap,
-                service_overlap_score=service_overlap,
-                coverage_overlap_score=coverage_overlap,
-                matching_modalities=sorted(matching_modalities),
-                matching_services=shared_services,
-                overlapping_regions=overlapping_regions,
-                resolution_comparison=res_comparison,
-                revisit_comparison=rev_comparison,
-                data_access_model=candidate.data_access_model,
-                disaster_charter_eligible=candidate.disaster_charter_eligible,
-                gaps_and_limitations=gaps,
-                replacement_caveat=(
-                    f"{candidate.name} provides overlapping capabilities ({match_class.value}), "
-                    "but is not an automatic 1:1 replacement due to orbital pass timing, sensor mode, "
-                    "and operational control differences."
-                ),
+        candidates.append(
+            AlternativeCandidate(
+                noradId=cand.noradId,
+                verifiedNoradId=cand.verifiedNoradId,
+                name=cand.name,
+                operator=cand.operator,
+                country=cand.country,
+                category=cand.category,
+                status=cand.status,
+                capabilityMatch=capability_match,
+                comparison=comparisons,
+                limitations=limitations,
+                dataSource=cand.dataSource,
+                sources=cand.sources,
             )
         )
 
-    recommendations.sort(key=lambda r: (r.compatibility_score, r.sensor_overlap_score), reverse=True)
-    return recommendations[:max_results]
+    candidates.sort(key=lambda c: (c.capabilityMatch, c.country == target.country), reverse=True)
+    top_candidates = candidates[:max_results]
+
+    redundancy_gaps = _build_redundancy_gaps(target, top_candidates)
+
+    methodology = (
+        "Deterministic 0-100 rule summing per-field compatibility: "
+        "sensorType (35) + spatialResolution (20) + revisitTime (15) + coverage (15) + dataAccess (15), "
+        "capped at 95 to reflect inherent orbital phasing and operational differences."
+    )
+
+    return AlternativesResponse(
+        noradId=target.noradId,
+        verifiedNoradId=target.verifiedNoradId,
+        name=target.name,
+        category=target.category,
+        matchingMethodology=methodology,
+        alternatives=top_candidates,
+        redundancyGaps=redundancy_gaps,
+        caveat=ALTERNATIVE_CAVEAT_TEXT,
+        dataSource=target.dataSource,
+    )
 
 
-def identify_redundancy_gaps(
-    target: SatelliteMission,
-    alternatives: list[AlternativeSatelliteRecommendation],
-    active_earth_events: Optional[list[ActiveEarthEvent]] = None,
-) -> list[RedundancyGap]:
-    """Detect systemic redundancy weaknesses across available candidate backups."""
-    gaps: list[RedundancyGap] = []
-
-    domestic_strong = [
-        alt
-        for alt in alternatives
-        if alt.country.lower() == target.country.lower() and alt.compatibility_score >= 0.65
-    ]
-    if not domestic_strong:
-        gaps.append(
-            RedundancyGap(
-                gap_type="SOVEREIGN_DOMESTIC_REDUNDANCY_GAP",
-                severity=SeverityTier.HIGH,
-                summary=(
-                    f"No direct domestic ({target.country}) satellite with equivalent primary sensor "
-                    f"capability is available in the catalog to back up {target.name}."
-                ),
-                mitigation_note=(
-                    "Coordinate pre-authorized open international feeds (e.g., Copernicus / WMO) or "
-                    "International Charter Space and Major Disasters tasking pathways."
-                ),
-            )
-        )
-
-    target_is_sar = any(s.modality in SAR_MODALITIES for s in target.sensors)
-    sar_alts = [
-        alt
-        for alt in alternatives
-        if any(m in {"SAR_C_BAND", "SAR_L_BAND"} for m in alt.matching_modalities)
-    ]
-    if target_is_sar and not sar_alts:
-        gaps.append(
-            RedundancyGap(
-                gap_type="ALL_WEATHER_SAR_CONTINUITY_GAP",
-                severity=SeverityTier.CRITICAL,
-                summary=(
-                    f"No all-weather SAR backup identified for {target.name}; optical backups cannot "
-                    "penetrate monsoon or cyclonic cloud cover."
-                ),
-                mitigation_note="Escalate orbital review and establish external commercial/agency SAR tasking.",
-            )
-        )
-    elif target_is_sar and not any(a.country.lower() == target.country.lower() for a in sar_alts):
-        gaps.append(
-            RedundancyGap(
-                gap_type="SOVEREIGN_ALL_WEATHER_SAR_GAP",
-                severity=SeverityTier.HIGH,
-                summary=(
-                    f"All-weather radar (SAR) continuity for {target.name} relies exclusively on "
-                    f"international missions ({', '.join(a.name for a in sar_alts[:3])}) with fixed external pass schedules."
-                ),
-                mitigation_note=(
-                    "Pre-stage Sentinel-1A/1C Copernicus ingestion pipelines and Sentinel Asia / "
-                    "International Charter tasking for ALOS-2 or RCM-1 during monsoon flood windows."
-                ),
-            )
-        )
-
-    if any(s.modality == SensorModality.SEARCH_AND_RESCUE for s in target.sensors):
-        sar_beacon_alts = [
-            a for a in alternatives if SensorModality.SEARCH_AND_RESCUE.value in a.matching_modalities
-        ]
-        if len(sar_beacon_alts) <= 1:
-            gaps.append(
-                RedundancyGap(
-                    gap_type="EMERGENCY_BEACON_RELAY_CONCENTRATION",
-                    severity=SeverityTier.HIGH,
-                    summary=(
-                        f"Geostationary distress-beacon relay (SAS&R) depends heavily on {target.name} "
-                        "and limited co-regional INSAT assets."
-                    ),
-                    mitigation_note="Verify MEOSAR/LEOSAR COSPAS-SARSAT fallback routing with INMCC.",
-                )
-            )
-
-    if active_earth_events:
-        active_desc = ", ".join(f"{e.event_type} ({e.region})" for e in active_earth_events)
-        gaps.append(
-            RedundancyGap(
-                gap_type="ACTIVE_DISASTER_REVISIT_SENSITIVITY",
-                severity=SeverityTier.HIGH,
-                summary=(
-                    f"Active Earth emergency context ({active_desc}) reduces tolerance for any "
-                    "acquisition outage or maneuver-induced observation blackout."
-                ),
-                mitigation_note=(
-                    "Coordinate potential collision-avoidance maneuver windows (if validated by CDM) "
-                    "with disaster-management pass schedules to minimize critical observation loss."
-                ),
-            )
-        )
+def _build_redundancy_gaps(
+    target: SatelliteRecord,
+    alternatives: list[AlternativeCandidate],
+) -> list[str]:
+    gaps: list[str] = []
 
     if not alternatives:
         gaps.append(
-            RedundancyGap(
-                gap_type="SINGLE_POINT_OF_FAILURE",
-                severity=SeverityTier.CRITICAL,
-                summary=f"No compatible backup satellites found in catalog for {target.name}.",
-                mitigation_note="Prioritize validated CDM assessment and contingency planning.",
+            f"No operational alternative satellite with comparable capability was found in the catalog for {target.name}."
+        )
+        return gaps
+
+    same_country = [a for a in alternatives if a.country.lower() == target.country.lower()]
+    if not same_country:
+        gaps.append(
+            f"No operational domestic ({target.country}) backup satellite in the catalog matches {target.name}; "
+            "service continuity would rely on external international operators."
+        )
+
+    if target.capabilities.allWeatherCapable:
+        if any(
+            any("all-weather" in lim.lower() for lim in alt.limitations)
+            for alt in alternatives[:3]
+        ):
+            gaps.append(
+                "Optical alternatives cannot penetrate monsoon or cyclonic cloud cover, leaving an all-weather observation gap."
             )
+        if not same_country:
+            gaps.append(
+                "All-weather radar continuity depends on international SAR missions with pre-scheduled or charter-tasked passes rather than direct sovereign tasking."
+            )
+
+    if target.capabilities.spatialResolutionMeters is not None and target.capabilities.spatialResolutionMeters <= 1.0:
+        if all(
+            any("lower spatial resolution" in lim.lower() for lim in alt.limitations)
+            for alt in alternatives
+        ):
+            gaps.append(
+                f"None of the catalogued alternatives match {target.name}'s sub-metre/1 m class spatial resolution."
+            )
+
+    if target.orbitRegime == "GEO":
+        if any("slower revisit" in lim.lower() for alt in alternatives for lim in alt.limitations):
+            gaps.append(
+                "Polar LEO meteorological alternatives cannot replace continuous geostationary rapid-scan imaging."
+            )
+        if any(s.serviceId == "search_and_rescue" for s in target.supportedServices):
+            gaps.append(
+                "External geostationary weather satellites (e.g., Meteosat-9, Himawari-9) do not carry domestic ISRO Data Relay (DRT) or SAS&R distress-beacon transponders."
+            )
+
+    if not gaps:
+        gaps.append(
+            "Even where sensor capabilities overlap, orbital pass timing, viewing angle, and operator tasking rules create temporary coverage gaps."
         )
 
     return gaps
-
-
-def run_continuity_analysis(
-    norad_id: int,
-    db: MissionDatabase,
-    *,
-    active_earth_events: Optional[list[ActiveEarthEvent]] = None,
-    max_results: int = 5,
-    conjunction_provenance: str = "simulated_scenario",
-    target_name_fallback: Optional[str] = None,
-) -> ContinuityAnalysisResponse:
-    """Execute full Earth-level service disruption & alternative satellite continuity analysis."""
-    mission = db.get_by_norad_id(norad_id)
-    if mission is None:
-        return ContinuityAnalysisResponse(
-            target_norad_id=norad_id,
-            target_name=target_name_fallback or f"NORAD {norad_id}",
-            is_catalogued_mission=False,
-            disrupted_services=[],
-            redundancy_gaps=[
-                RedundancyGap(
-                    gap_type="UNCATALOGUED_MISSION_METADATA",
-                    severity=SeverityTier.MODERATE,
-                    summary=(
-                        f"NORAD ID {norad_id} is not present in ASTRAVIGIL's verified mission catalog. "
-                        "Earth service dependencies and alternative matches cannot be inferred without verified metadata."
-                    ),
-                    mitigation_note="Add verified operator/sensor profile to mission_db.json.",
-                )
-            ],
-            alternatives=[],
-            overall_continuity_assessment=(
-                "Mission metadata unavailable in curated catalog; continuity assessment requires "
-                "verified payload and service-dependency inputs."
-            ),
-            provenance=DataProvenance(
-                mission_data_provenance="uncatalogued_fallback",
-                conjunction_data_provenance=conjunction_provenance,  # type: ignore[arg-type]
-            ),
-        )
-
-    disruptions = analyze_service_disruptions(mission, active_earth_events)
-    alternatives = find_alternative_satellites(mission, db, max_results=max_results)
-    gaps = identify_redundancy_gaps(mission, alternatives, active_earth_events)
-
-    top_names = ", ".join(
-        f"{a.name} ({int(a.compatibility_score * 100)}% overlap, {a.match_class.value})"
-        for a in alternatives[:3]
-    )
-    if alternatives:
-        overall = (
-            f"If {mission.name} experiences service degradation or unavailability, "
-            f"{len(disruptions)} documented terrestrial service(s) could be impacted. "
-            f"Top partial continuity candidates: {top_names}. "
-            f"{len(gaps)} redundancy gap(s) identified; no external mission provides an automatic 1:1 replacement."
-        )
-    else:
-        overall = (
-            f"No overlapping backup satellites were identified in the current catalog for {mission.name}; "
-            "service continuity risk is elevated if the spacecraft becomes unavailable."
-        )
-
-    return ContinuityAnalysisResponse(
-        target_norad_id=mission.norad_id,
-        target_name=mission.name,
-        is_catalogued_mission=True,
-        disrupted_services=disruptions,
-        redundancy_gaps=gaps,
-        alternatives=alternatives,
-        overall_continuity_assessment=overall,
-        provenance=DataProvenance(
-            mission_data_provenance="verified_public_catalog",
-            conjunction_data_provenance=conjunction_provenance,  # type: ignore[arg-type]
-        ),
-    )
