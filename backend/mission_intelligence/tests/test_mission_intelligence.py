@@ -1,187 +1,299 @@
-"""Automated tests for ASTRAVIGIL Member 3: AI & Mission Intelligence module."""
+"""Contract verification tests for ASTRAVIGIL Mission Intelligence (Member 3).
+
+Covers Step 7 requirements:
+- Response shapes for all 6 endpoints
+- Criticality score reproducible from returned factors and weights (including inverted factor)
+- Exact criticality tier boundaries from single config
+- Independence of criticality from orbital data
+- 404 & 422 standard error envelope handling
+- Alternatives per-field comparison, capabilityMatch (0-100), limitations, redundancyGaps, caveat
+- Briefing fallback when LLM_API_KEY is missing, on 15s timeout, and on forbidden post-check text
+- Zero collision-probability fields anywhere in any API response
+- CORS configured from CORS_ORIGINS env var (default http://localhost:5173)
+"""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
+import httpx
+import pytest
 from fastapi.testclient import TestClient
 
-from backend.mission_intelligence.app import app
-from backend.mission_intelligence.database import get_mission_db
-from backend.mission_intelligence.schemas import ActiveEarthEvent, ConjunctionAlertInput, SeverityTier
-from backend.mission_intelligence.scoring_engine import (
-    compute_earth_impact,
-    compute_explainable_priority,
-    compute_mission_criticality,
+from backend.mission_intelligence.ai_explainer import find_forbidden_language
+from backend.mission_intelligence.app import app, create_app
+from backend.mission_intelligence.config import (
+    ALTERNATIVE_CAVEAT_TEXT,
+    CRITICALITY_FACTOR_SPECS,
+    map_score_to_tier,
 )
+from backend.mission_intelligence.database import get_mission_db
 
 client = TestClient(app)
 SAMPLE_DIR = Path(__file__).resolve().parent.parent / "sample_payloads"
 
+FORBIDDEN_PROBABILITY_KEYS = {
+    "collision_probability",
+    "collisionprobability",
+    "pc",
+    "collision_prob",
+    "impact_probability",
+    "impactprobability",
+    "probability_of_collision",
+}
 
-def test_mission_database_loads_verified_satellites() -> None:
+
+def _assert_no_collision_probability_fields(obj: Any, path: str = "$") -> None:
+    """Recursively verify no response JSON contains collision-probability keys."""
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            assert key.lower() not in FORBIDDEN_PROBABILITY_KEYS, (
+                f"Forbidden collision-probability key '{key}' found at {path}.{key}"
+            )
+            _assert_no_collision_probability_fields(value, f"{path}.{key}")
+    elif isinstance(obj, list):
+        for idx, item in enumerate(obj):
+            _assert_no_collision_probability_fields(item, f"{path}[{idx}]")
+
+
+def test_required_five_satellites_and_alternatives_loaded() -> None:
     db = get_mission_db()
-    assert db.count() >= 18
+    assert db.count() >= 10
+    for norad_id in (44431, 44804, 51656, 41783, 54361, 41752):
+        assert db.get_by_norad_id(norad_id) is not None, f"Missing required NORAD {norad_id}"
 
-    eos04 = db.get_by_norad_id(51656)
-    assert eos04 is not None
-    assert eos04.name == "EOS-04"
-    assert eos04.operator == "ISRO"
-    assert any(s.modality.value == "SAR_C_BAND" for s in eos04.sensors)
-    assert any(d.service_id == "flood_monitoring" for d in eos04.active_service_dependencies)
+    # Verify CARTOSAT-3 alias (44431) and verified NORAD (44804) resolve to the same mission
+    assert db.get_by_norad_id(44431).name == "CARTOSAT-3"  # type: ignore[union-attr]
+    assert db.get_by_norad_id(44804).name == "CARTOSAT-3"  # type: ignore[union-attr]
 
-    # Verify global SAR alternatives exist for continuity matching
-    assert db.get_by_norad_id(39634) is not None  # Sentinel-1A
-    assert db.get_by_norad_id(62261) is not None  # Sentinel-1C
-    assert db.get_by_norad_id(39766) is not None  # ALOS-2
-    assert db.get_by_norad_id(62701) is not None  # Pixxel Firefly-1
-    assert db.get_by_norad_id(58989) is not None  # TIRSAT CubeSat
+    # Verify PRATHAM status reflects verified public Inactive status
+    assert db.get_by_norad_id(41783).status == "Inactive"  # type: ignore[union-attr]
 
 
-def test_dynamic_flood_multiplier_boosts_earth_impact_without_changing_orbital_risk() -> None:
-    db = get_mission_db()
-    eos04 = db.get_by_norad_id(51656)
-    assert eos04 is not None
-
-    base_alert = ConjunctionAlertInput(
-        primary_norad_id=51656,
-        secondary_name="FENGYUN 1C DEB",
-        secondary_object_type="DEBRIS",
-        tca_utc="2026-11-22T06:30:00Z",
-        miss_distance_km=2.0,
-        relative_velocity_kms=14.0,
-        active_earth_events=[],
-    )
-    flood_alert = base_alert.model_copy(
-        update={
-            "active_earth_events": [
-                ActiveEarthEvent(
-                    event_type="flood_alert",
-                    region="Assam / Brahmaputra Basin, India",
-                    severity=SeverityTier.CRITICAL,
-                )
-            ]
-        }
-    )
-
-    res_base = compute_explainable_priority(base_alert, eos04)
-    res_flood = compute_explainable_priority(flood_alert, eos04)
-
-    # Scientific Rule 4 & 5: Orbital screening dimension MUST remain identical regardless of Earth alerts
-    assert res_base.orbital_screening.orbital_risk_score == res_flood.orbital_screening.orbital_risk_score
-    assert res_base.orbital_screening.collision_probability is None
-    assert res_flood.orbital_screening.collision_probability is None
-
-    # Dynamic flood multiplier MUST boost Earth impact and Explainable Priority Score
-    assert res_flood.earth_impact.dynamic_context_multiplier > 1.0
-    assert res_flood.earth_impact.effective_earth_impact_score > res_base.earth_impact.effective_earth_impact_score
-    assert res_flood.explainable_priority_score > res_base.explainable_priority_score
-    assert len(res_flood.earth_impact.applied_multipliers) == 1
-    assert res_flood.earth_impact.applied_multipliers[0].region_matched is True
-
-
-def test_mission_criticality_orders_disaster_sat_above_experimental_cubesat() -> None:
-    db = get_mission_db()
-    eos04_crit = compute_mission_criticality(db.get_by_norad_id(51656))
-    tirsat_crit = compute_mission_criticality(db.get_by_norad_id(58989))
-
-    assert eos04_crit.mission_criticality_score > tirsat_crit.mission_criticality_score
-    assert len(eos04_crit.criteria_breakdown) == 4
-    assert abs(sum(c.weight for c in eos04_crit.criteria_breakdown) - 1.0) < 1e-6
-
-
-def test_api_health_and_missions_endpoints() -> None:
-    health = client.get("/api/health")
+def test_health_and_satellites_list_shapes() -> None:
+    health = client.get("/health")
     assert health.status_code == 200
-    body = health.json()
-    assert body["status"] == "ok"
-    assert body["catalog_satellites_loaded"] >= 18
+    h_body = health.json()
+    assert h_body["status"] == "ok"
+    assert h_body["port"] == 8001
+    assert h_body["methodology"] == "rule_based_v1"
+    assert h_body["satellitesLoaded"] >= 10
+    _assert_no_collision_probability_fields(h_body)
 
-    eos04_resp = client.get("/api/missions/51656")
-    assert eos04_resp.status_code == 200
-    data = eos04_resp.json()
-    assert data["mission"]["name"] == "EOS-04"
-    assert data["baseline_criticality"]["mission_criticality_score"] > 0.8
-    assert data["provenance"]["mission_data_provenance"] == "verified_public_catalog"
+    sat_list = client.get("/api/mission/satellites")
+    assert sat_list.status_code == 200
+    s_body = sat_list.json()
+    assert s_body["total"] == len(s_body["satellites"])
+    assert s_body["total"] >= 10
+    norad_ids = {item["noradId"] for item in s_body["satellites"]}
+    assert {44431, 51656, 41783, 54361, 41752}.issubset(norad_ids)
+    _assert_no_collision_probability_fields(s_body)
 
-    missing = client.get("/api/missions/999999")
-    assert missing.status_code == 404
+
+def test_capabilities_endpoint_shape_and_provenance() -> None:
+    resp = client.get("/api/mission/satellites/44431/capabilities")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["noradId"] == 44431
+    assert body["verifiedNoradId"] == 44804
+    assert body["name"] == "CARTOSAT-3"
+    caps = body["capabilities"]
+    for field in ("sensorType", "spatialResolution", "revisitTime", "coverage", "dataAccess"):
+        assert field in caps and caps[field]
+    assert body["fieldProvenance"]["noradId"]["dataSource"] == "mock"
+    assert body["fieldProvenance"]["verifiedNoradId"]["dataSource"] == "real"
+    assert len(body["sources"]) >= 1
+    _assert_no_collision_probability_fields(body)
 
 
-def test_api_alternatives_for_eos04_identifies_sar_backups_and_sovereign_gap() -> None:
-    resp = client.get("/api/alternatives/51656?active_event_type=flood_alert&active_region=Assam")
+def test_criticality_score_is_reproducible_from_factors_and_weights() -> None:
+    assert abs(sum(spec.weight for spec in CRITICALITY_FACTOR_SPECS) - 1.0) < 1e-9
+
+    for norad_id in (44431, 51656, 41783, 54361, 41752):
+        resp = client.get(f"/api/mission/satellites/{norad_id}/criticality")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["methodology"] == "rule_based_v1"
+        assert len(body["factors"]) == 6
+
+        # Reproduce score directly from returned factors & weights
+        recomputed = 0.0
+        inverted_found = False
+        for factor in body["factors"]:
+            expected_eff = (100 - factor["value"]) if factor["inverted"] else factor["value"]
+            assert factor["effectiveValue"] == expected_eff
+            assert abs(factor["weightedContribution"] - round(factor["weight"] * expected_eff, 2)) < 1e-6
+            recomputed += factor["weight"] * expected_eff
+            if factor["id"] == "availabilityOfAlternatives":
+                inverted_found = True
+                assert factor["inverted"] is True
+                assert factor["direction"] == "lower_is_more_critical"
+                assert "fewer alternatives" in factor["description"].lower()
+            # Criticality inputs must be transparently marked as analytical mock
+            assert factor["dataSource"] == "mock"
+
+        assert inverted_found is True
+        assert body["score"] == round(recomputed)
+        assert body["tier"] == map_score_to_tier(body["score"]).tier_id
+        _assert_no_collision_probability_fields(body)
+
+    # Confirm worked README example ("why 92?" for CARTOSAT-3)
+    cartosat_crit = client.get("/api/mission/satellites/44431/criticality").json()
+    assert cartosat_crit["score"] == 92
+    assert cartosat_crit["tier"] == "TIER_1_CRITICAL"
+
+    # Confirm PRATHAM (inactive student CubeSat) maps to TIER_4_LOW
+    pratham_crit = client.get("/api/mission/satellites/41783/criticality").json()
+    assert pratham_crit["score"] < 40
+    assert pratham_crit["tier"] == "TIER_4_LOW"
+
+
+@pytest.mark.parametrize(
+    ("score", "expected_tier"),
+    [
+        (100, "TIER_1_CRITICAL"),
+        (85, "TIER_1_CRITICAL"),
+        (84, "TIER_2_HIGH"),
+        (70, "TIER_2_HIGH"),
+        (69, "TIER_3_MODERATE"),
+        (40, "TIER_3_MODERATE"),
+        (39, "TIER_4_LOW"),
+        (0, "TIER_4_LOW"),
+    ],
+)
+def test_criticality_tier_boundaries(score: int, expected_tier: str) -> None:
+    assert map_score_to_tier(score).tier_id == expected_tier
+
+
+def test_alternatives_endpoint_comparison_limitations_and_caveat() -> None:
+    resp = client.get("/api/mission/satellites/51656/alternatives")
     assert resp.status_code == 200
     body = resp.json()
 
-    assert body["target_norad_id"] == 51656
+    assert body["noradId"] == 51656
+    assert body["caveat"] == ALTERNATIVE_CAVEAT_TEXT
+    assert len(body["redundancyGaps"]) >= 1
+    assert len(body["alternatives"]) >= 2
+
     alt_names = [a["name"] for a in body["alternatives"]]
-    assert "Sentinel-1A" in alt_names or "Sentinel-1C" in alt_names
-    assert any(a["compatibility_score"] < 1.0 for a in body["alternatives"])
-    assert all(len(a["gaps_and_limitations"]) > 0 for a in body["alternatives"])
+    assert "Sentinel-1A" in alt_names
 
-    gap_types = {g["gap_type"] for g in body["redundancy_gaps"]}
-    assert "SOVEREIGN_DOMESTIC_REDUNDANCY_GAP" in gap_types
-    assert "SOVEREIGN_ALL_WEATHER_SAR_GAP" in gap_types
-    assert "ACTIVE_DISASTER_REVISIT_SENSITIVITY" in gap_types
+    for alt in body["alternatives"]:
+        assert 0 <= alt["capabilityMatch"] <= 95  # Never implies 100% 1:1 replacement
+        compared_fields = {c["field"] for c in alt["comparison"]}
+        assert compared_fields == {
+            "sensorType",
+            "spatialResolution",
+            "revisitTime",
+            "coverage",
+            "dataAccess",
+        }
+        assert len(alt["limitations"]) >= 1
+    _assert_no_collision_probability_fields(body)
 
 
-def test_api_analyze_impact_with_flood_sample_payload(monkeypatch) -> None:
-    # Force deterministic fallback to guarantee offline test reproducibility
-    monkeypatch.setenv("ASTRAVIGIL_LLM_PROVIDER", "fallback")
+def test_404_and_422_standard_error_shape() -> None:
+    for path in (
+        "/api/mission/satellites/999999/capabilities",
+        "/api/mission/satellites/999999/criticality",
+        "/api/mission/satellites/999999/alternatives",
+    ):
+        resp = client.get(path)
+        assert resp.status_code == 404
+        body = resp.json()
+        assert body["error"]["code"] == "SATELLITE_NOT_FOUND"
+        assert body["error"]["status"] == 404
+        assert "999999" in body["error"]["message"]
+        _assert_no_collision_probability_fields(body)
 
+    post_404 = client.post("/api/mission/satellites/999999/briefing", json={})
+    assert post_404.status_code == 404
+    assert post_404.json()["error"]["code"] == "SATELLITE_NOT_FOUND"
+
+    # Negative missDistanceKm triggers 422 standard error envelope
+    bad_req = client.post(
+        "/api/mission/satellites/51656/briefing",
+        json={"missDistanceKm": -5.0},
+    )
+    assert bad_req.status_code == 422
+    assert bad_req.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert bad_req.json()["error"]["status"] == 422
+
+
+def test_briefing_falls_back_to_rule_based_when_no_llm_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
     payload = json.loads((SAMPLE_DIR / "flood_monitoring_eos04_alert.json").read_text(encoding="utf-8"))
-    resp = client.post("/api/analyze-impact", json=payload)
+
+    resp = client.post("/api/mission/satellites/51656/briefing", json=payload)
     assert resp.status_code == 200
     body = resp.json()
 
-    assert body["target_norad_id"] == 51656
-    assert body["target_name"] == "EOS-04"
-    assert body["is_catalogued_mission"] is True
-
-    pa = body["priority_assessment"]
-    assert pa["explainable_priority_score"] >= 60.0
-    assert pa["priority_band"] == "CRITICAL_PRIORITY"
-    assert pa["orbital_screening"]["collision_probability"] is None
-    assert pa["earth_impact"]["dynamic_context_multiplier"] > 1.3
-    assert "Orbital Screening Risk" in pa["formula_numeric_trace"]
-
-    # Alternatives & service disruptions present
-    assert len(body["disrupted_services"]) >= 1
-    assert body["disrupted_services"][0]["service_id"] == "flood_monitoring"
-    assert body["disrupted_services"][0]["elevated_by_active_event"] is True
-    assert len(body["alternative_satellites"]) >= 3
-
-    # AI advisory fallback adheres to scientific caveats
-    advisory = body["ai_advisory"]
-    assert advisory is not None
-    assert advisory["generation_mode"] == "deterministic_fallback"
-    assert "EOS-04" in advisory["headline"]
-    assert len(advisory["recommended_operator_actions"]) >= 4
-    assert len(advisory["scientific_caveats"]) >= 5
-    assert body["provenance"]["conjunction_data_provenance"] == "simulated_scenario"
+    assert body["generatedBy"] == "rule_based"
+    assert body["fallbackReason"] == "missing_llm_api_key"
+    assert body["noradId"] == 51656
+    assert "preliminary" in body["physicalSeparationContext"].lower()
+    assert "independent" in body["missionImportanceContext"].lower()
+    assert find_forbidden_language(json.dumps(body)) is None
+    _assert_no_collision_probability_fields(body)
 
 
-def test_api_analyze_impact_handles_uncatalogued_satellite_gracefully(monkeypatch) -> None:
-    monkeypatch.setenv("ASTRAVIGIL_LLM_PROVIDER", "fallback")
+def test_briefing_rejects_llm_output_with_forbidden_probability_or_prediction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("LLM_API_KEY", "test-placeholder-key")
 
-    resp = client.post(
-        "/api/analyze-impact",
-        json={
-            "primary_norad_id": 999888,
-            "primary_name": "UNI-CUBESAT-DEMO",
-            "secondary_name": "DEBRIS-X",
-            "secondary_object_type": "DEBRIS",
-            "tca_utc": "2026-11-23T02:00:00Z",
-            "miss_distance_km": 4.2,
-            "relative_velocity_kms": 11.5,
-            "data_provenance": "simulated_scenario",
+    def fake_bad_llm(_context: dict[str, Any], _api_key: str) -> tuple[dict[str, Any], str]:
+        return (
+            {
+                "headline": "EOS-04 alert",
+                "summary": "The satellite will collide with debris with a 14% collision risk probability.",
+                "physicalSeparationContext": "Close approach.",
+                "missionImportanceContext": "High importance.",
+                "serviceImpactAndContinuity": "Flood mapping affected.",
+                "recommendedActions": ["Move satellite immediately."],
+            },
+            "mock-llm",
+        )
+
+    monkeypatch.setattr("backend.mission_intelligence.ai_explainer._call_llm", fake_bad_llm)
+
+    resp = client.post("/api/mission/satellites/51656/briefing", json={"missDistanceKm": 1.2})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["generatedBy"] == "rule_based"
+    assert body["fallbackReason"] is not None
+    assert body["fallbackReason"].startswith("post_check_rejected:")
+    assert find_forbidden_language(body["summary"]) is None
+    _assert_no_collision_probability_fields(body)
+
+
+def test_briefing_falls_back_on_llm_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LLM_API_KEY", "test-placeholder-key")
+
+    def fake_timeout_llm(_context: dict[str, Any], _api_key: str) -> tuple[dict[str, Any], str]:
+        raise httpx.ReadTimeout("Exceeded 15s timeout")
+
+    monkeypatch.setattr("backend.mission_intelligence.ai_explainer._call_llm", fake_timeout_llm)
+
+    resp = client.post("/api/mission/satellites/41752/briefing", json={"missDistanceKm": 3.5})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["generatedBy"] == "rule_based"
+    assert body["fallbackReason"] == "llm_timeout"
+    _assert_no_collision_probability_fields(body)
+
+
+def test_cors_allows_configured_origin(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+    custom_client = TestClient(create_app())
+    resp = custom_client.options(
+        "/api/mission/satellites",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "GET",
         },
     )
     assert resp.status_code == 200
-    body = resp.json()
-    assert body["is_catalogued_mission"] is False
-    assert body["mission_profile"] is None
-    assert body["priority_assessment"]["mission_criticality"]["mission_criticality_score"] == 0.5
-    assert body["provenance"]["mission_data_provenance"] == "uncatalogued_fallback"
-    assert body["ai_advisory"] is not None
+    assert resp.headers.get("access-control-allow-origin") == "http://localhost:5173"
