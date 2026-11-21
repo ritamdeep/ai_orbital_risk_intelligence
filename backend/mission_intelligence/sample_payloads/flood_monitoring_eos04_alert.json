@@ -1,0 +1,23 @@
+{
+  "event_id": "sim-flood-eos04-20261122T063000Z",
+  "primary_norad_id": 51656,
+  "primary_name": "EOS-04",
+  "secondary_norad_id": 31114,
+  "secondary_name": "FENGYUN 1C DEB",
+  "secondary_object_type": "DEBRIS",
+  "tca_utc": "2026-11-22T06:30:00Z",
+  "miss_distance_km": 1.35,
+  "relative_velocity_kms": 14.12,
+  "tle_epoch_age_hours": 8.5,
+  "active_earth_events": [
+    {
+      "event_type": "flood_alert",
+      "region": "Assam / Brahmaputra Basin, India",
+      "severity": "CRITICAL",
+      "description": "Severe monsoon flood inundation warning with dense cloud cover requiring all-weather C-band SAR passes."
+    }
+  ],
+  "data_provenance": "simulated_scenario",
+  "include_ai_explanation": true,
+  "max_alternatives": 5
+}

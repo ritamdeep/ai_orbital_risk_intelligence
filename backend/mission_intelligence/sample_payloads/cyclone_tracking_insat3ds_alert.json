@@ -1,0 +1,23 @@
+{
+  "event_id": "sim-cyclone-insat3ds-20261122T111500Z",
+  "primary_norad_id": 58990,
+  "primary_name": "INSAT-3DS",
+  "secondary_norad_id": null,
+  "secondary_name": "SIMULATED GEO DRIFT OBJECT",
+  "secondary_object_type": "ROCKET_BODY",
+  "tca_utc": "2026-11-22T11:15:00Z",
+  "miss_distance_km": 3.8,
+  "relative_velocity_kms": 0.45,
+  "tle_epoch_age_hours": 14.0,
+  "active_earth_events": [
+    {
+      "event_type": "cyclone_alert",
+      "region": "Bay of Bengal / Odisha Coast, India",
+      "severity": "CRITICAL",
+      "description": "Severe cyclonic storm approaching eastern coast requiring continuous geostationary imaging and SAS&R readiness."
+    }
+  ],
+  "data_provenance": "simulated_scenario",
+  "include_ai_explanation": true,
+  "max_alternatives": 5
+}

@@ -1,0 +1,1462 @@
+{
+  "schema_version": "1.0.0",
+  "catalog_name": "ASTRAVIGIL Curated Satellite Mission Database",
+  "last_verified_utc": "2026-11-21T19:00:00Z",
+  "scientific_note": "All NORAD IDs, operators, orbit regimes, and sensor modalities reflect publicly documented mission profiles (ISRO, WMO OSCAR, ESA Copernicus, NASA/USGS, JAXA, CSA, CEOS EO Handbook). Unknown or mission-mode-dependent technical figures are stored as null rather than estimated.",
+  "satellites": {
+    "51656": {
+      "norad_id": 51656,
+      "cospar_id": "2022-013A",
+      "name": "EOS-04",
+      "alternate_names": ["RISAT-1A"],
+      "operator": "ISRO",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "disaster_monitoring",
+      "mission_categories": ["earth_observation", "disaster_monitoring", "flood_mapping", "agriculture"],
+      "launch_date": "2022-02-14",
+      "mission_summary": "ISRO C-band Synthetic Aperture Radar (SAR) Earth-observation satellite providing all-weather, day-and-night imagery for flood inundation mapping, agriculture, forestry, and soil moisture monitoring.",
+      "sensors": [
+        {
+          "name": "C-band SAR (5.35 GHz)",
+          "modality": "SAR_C_BAND",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": 1.0,
+          "swath_km": 225.0,
+          "notes": "Multi-mode SAR (Fine Resolution Stripmap to Coarse Resolution ScanSAR; resolution ranges from ~1 m high-res spotlight/stripmap modes to ~50 m wide swath)."
+        }
+      ],
+      "revisit_time_days": 17.0,
+      "coverage_regions": ["India", "South Asia", "Indian Ocean", "Global"],
+      "active_service_dependencies": [
+        {
+          "service_id": "flood_monitoring",
+          "service_name": "All-Weather Flood Inundation Mapping",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["NDMA", "State Disaster Management Authorities", "Central Water Commission", "NRSC Bhuvan"],
+          "disruption_consequence": "Potential loss of sovereign cloud-penetrating radar passes over monsoon-flooded basins, delaying inundation extent maps under heavy cloud cover."
+        },
+        {
+          "service_id": "cyclone_tracking",
+          "service_name": "Post-Cyclone Coastal Inundation & Surface Assessment",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["NDMA", "Coastal Emergency Operations", "IMD Support"],
+          "disruption_consequence": "Reduced ability to map coastal flooding and wind-damaged terrain through dense cyclonic cloud cover."
+        },
+        {
+          "service_id": "agriculture_crop_monitoring",
+          "service_name": "Kharif/Rabi Crop Acreage & Soil Moisture Monitoring",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Ministry of Agriculture", "MNCFC", "Forestry Monitoring"],
+          "disruption_consequence": "Intermittent gaps in cloud-free monsoon crop monitoring and soil-moisture analytics."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "National / Institutional",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.95,
+        "service_dependency_breadth": 0.85,
+        "domestic_redundancy_scarcity": 0.90,
+        "sensor_uniqueness": 0.85
+      },
+      "sources": [
+        "ISRO EOS-04 / RISAT-1A Mission Profile (isro.gov.in)",
+        "WMO OSCAR Space Satellite Program: EOS-04",
+        "CEOS Earth Observation Handbook"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "54361": {
+      "norad_id": 54361,
+      "cospar_id": "2022-158A",
+      "name": "EOS-06",
+      "alternate_names": ["Oceansat-3"],
+      "operator": "ISRO",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "earth_observation",
+      "mission_categories": ["earth_observation", "oceanography", "cyclone_monitoring", "weather_meteorology"],
+      "launch_date": "2022-11-26",
+      "mission_summary": "ISRO third-generation ocean observation satellite carrying Ocean Color Monitor (OCM-3), Sea Surface Temperature Monitor (SSTM), and Ku-band Scatterometer (OSCAT-3) for cyclone wind-vector forecasting and marine fisheries advisories.",
+      "sensors": [
+        {
+          "name": "OSCAT-3 Ku-band Scatterometer",
+          "modality": "SCATTEROMETER",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": null,
+          "swath_km": 1400.0,
+          "notes": "Measures ocean surface wind speed and direction for cyclone genesis and intensification tracking."
+        },
+        {
+          "name": "OCM-3 Ocean Color Monitor",
+          "modality": "OCEAN_COLOR",
+          "all_weather_capable": false,
+          "day_night_capable": false,
+          "spatial_resolution_m": 360.0,
+          "swath_km": 1440.0,
+          "notes": "13-band optical ocean color sensor supporting Potential Fishing Zones (PFZ) and algal bloom monitoring."
+        },
+        {
+          "name": "SSTM Sea Surface Temperature Monitor",
+          "modality": "THERMAL_IR",
+          "all_weather_capable": false,
+          "day_night_capable": true,
+          "spatial_resolution_m": 1000.0,
+          "swath_km": 1500.0,
+          "notes": "Two-band thermal infrared sea surface temperature sensor."
+        }
+      ],
+      "revisit_time_days": 2.0,
+      "coverage_regions": ["India", "Indian Ocean", "Bay of Bengal", "Arabian Sea", "Global"],
+      "active_service_dependencies": [
+        {
+          "service_id": "cyclone_tracking",
+          "service_name": "Ocean Wind-Vector & Cyclone Genesis Monitoring",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["IMD", "INCOIS", "NDMA", "Maritime Meteorology"],
+          "disruption_consequence": "Potential reduction in domestic scatterometer ocean-wind assimilation for Bay of Bengal and Arabian Sea cyclone intensity forecasting."
+        },
+        {
+          "service_id": "maritime_safety",
+          "service_name": "Ocean State Forecasting & Potential Fishing Zone Advisories",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["INCOIS", "Coastal Fisheries", "Indian Maritime Agencies"],
+          "disruption_consequence": "Degraded sea-surface temperature and ocean-color inputs for maritime and coastal livelihood advisories."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "National / Institutional",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.85,
+        "service_dependency_breadth": 0.80,
+        "domestic_redundancy_scarcity": 0.90,
+        "sensor_uniqueness": 0.85
+      },
+      "sources": [
+        "ISRO EOS-06 / Oceansat-3 Mission Profile (isro.gov.in)",
+        "WMO OSCAR Space Satellite Program: EOS-06"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "44804": {
+      "norad_id": 44804,
+      "cospar_id": "2019-081A",
+      "name": "Cartosat-3",
+      "alternate_names": ["CARTOSAT-3"],
+      "operator": "ISRO",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "earth_observation",
+      "mission_categories": ["earth_observation", "disaster_monitoring", "high_res_mapping"],
+      "launch_date": "2019-11-27",
+      "mission_summary": "ISRO third-generation agile very-high-resolution optical imaging satellite for large-scale urban planning, infrastructure mapping, and post-disaster damage assessment.",
+      "sensors": [
+        {
+          "name": "Panchromatic High-Resolution Camera (PAN)",
+          "modality": "OPTICAL_VHR",
+          "all_weather_capable": false,
+          "day_night_capable": false,
+          "spatial_resolution_m": 0.25,
+          "swath_km": 16.0,
+          "notes": "Sub-meter panchromatic optical imaging; requires cloud-free daylight conditions."
+        },
+        {
+          "name": "4-Band Multispectral Camera (MX)",
+          "modality": "OPTICAL_MULTISPECTRAL",
+          "all_weather_capable": false,
+          "day_night_capable": false,
+          "spatial_resolution_m": 1.14,
+          "swath_km": 16.0,
+          "notes": "High-resolution VNIR multispectral imaging."
+        }
+      ],
+      "revisit_time_days": 5.0,
+      "coverage_regions": ["India", "South Asia", "Global"],
+      "active_service_dependencies": [
+        {
+          "service_id": "disaster_damage_mapping",
+          "service_name": "Post-Disaster Infrastructure & Landslide Damage Assessment",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["NDMA", "NRSC", "Urban & Rural Infrastructure Agencies"],
+          "disruption_consequence": "Loss of sovereign sub-meter optical imaging needed to assess collapsed structures, washed-out roads, and landslide scars after clear skies return."
+        },
+        {
+          "service_id": "urban_cartography",
+          "service_name": "National Large-Scale Cartographic & Urban Planning",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Survey of India", "Urban Development Ministries", "NRSC Bhuvan"],
+          "disruption_consequence": "Delays in high-resolution national mapping updates and coastal infrastructure monitoring."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "National / Institutional",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.80,
+        "service_dependency_breadth": 0.78,
+        "domestic_redundancy_scarcity": 0.85,
+        "sensor_uniqueness": 0.90
+      },
+      "sources": [
+        "ISRO Cartosat-3 Mission Profile (isro.gov.in)",
+        "WMO OSCAR Space: Cartosat-3"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "41877": {
+      "norad_id": 41877,
+      "cospar_id": "2016-074A",
+      "name": "Resourcesat-2A",
+      "alternate_names": ["RESOURCESAT-2A"],
+      "operator": "ISRO",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "earth_observation",
+      "mission_categories": ["earth_observation", "agriculture", "land_resources", "disaster_monitoring"],
+      "launch_date": "2016-12-07",
+      "mission_summary": "ISRO multispectral optical remote sensing satellite carrying LISS-IV, LISS-III, and AWiFS sensors for land-use mapping, drought/crop monitoring, and clear-sky flood assessment.",
+      "sensors": [
+        {
+          "name": "LISS-IV / LISS-III / AWiFS Multispectral Suite",
+          "modality": "OPTICAL_MULTISPECTRAL",
+          "all_weather_capable": false,
+          "day_night_capable": false,
+          "spatial_resolution_m": 5.8,
+          "swath_km": 740.0,
+          "notes": "Multi-tier optical suite: LISS-IV (~5.8 m, 70 km swath), LISS-III (~23.5 m, 141 km swath), AWiFS (~56 m, 740 km swath)."
+        }
+      ],
+      "revisit_time_days": 5.0,
+      "coverage_regions": ["India", "South Asia", "Global"],
+      "active_service_dependencies": [
+        {
+          "service_id": "agriculture_crop_monitoring",
+          "service_name": "National Crop Inventory & Drought Assessment",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Ministry of Agriculture", "NRSC", "State Remote Sensing Centres"],
+          "disruption_consequence": "Reduced domestic medium-resolution optical time-series for national crop health and drought stress bulletins."
+        },
+        {
+          "service_id": "flood_monitoring",
+          "service_name": "Clear-Sky Flood & Water-Body Extent Mapping",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["NRSC Bhuvan", "Central Water Commission", "State Disaster Authorities"],
+          "disruption_consequence": "Fewer wide-swath optical passes to evaluate post-flood standing water and agricultural losses once clouds clear."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "National / Institutional",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.72,
+        "service_dependency_breadth": 0.80,
+        "domestic_redundancy_scarcity": 0.65,
+        "sensor_uniqueness": 0.55
+      },
+      "sources": [
+        "ISRO Resourcesat-2A Mission Profile (isro.gov.in)",
+        "WMO OSCAR Space: Resourcesat-2A"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "60454": {
+      "norad_id": 60454,
+      "cospar_id": "2024-147A",
+      "name": "EOS-08",
+      "alternate_names": ["Microsat-2C"],
+      "operator": "ISRO",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Circular Low Earth Orbit (~475 km, 37.4° inclination)",
+      "mission_type": "experimental_cubesat",
+      "mission_categories": ["earth_observation", "disaster_monitoring", "technology_demonstration"],
+      "launch_date": "2024-08-16",
+      "mission_summary": "ISRO microsatellite platform carrying Electro Optical Infrared (EOIR) payload for disaster/thermal monitoring, GNSS-Reflectometry (GNSS-R) for ocean wind & flood/soil moisture sensing, and SiC UV Dosimeter.",
+      "sensors": [
+        {
+          "name": "EOIR (Mid-Wave & Long-Wave IR Payload)",
+          "modality": "THERMAL_IR",
+          "all_weather_capable": false,
+          "day_night_capable": true,
+          "spatial_resolution_m": null,
+          "swath_km": null,
+          "notes": "Designed for day/night thermal imaging including wildfire, volcanic, and disaster environmental observation."
+        },
+        {
+          "name": "GNSS-R Reflectometry Payload",
+          "modality": "GNSS_R",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": null,
+          "swath_km": null,
+          "notes": "Experimental ocean surface wind analysis, soil moisture assessment, and flood detection over Himalayan/inland regions."
+        }
+      ],
+      "revisit_time_days": null,
+      "coverage_regions": ["India", "South Asia", "Low-to-Mid Latitudes (+/- 37 deg)"],
+      "active_service_dependencies": [
+        {
+          "service_id": "wildfire_thermal_monitoring",
+          "service_name": "Experimental Thermal-IR Hazard & Fire Observation",
+          "criticality_tier": "MODERATE",
+          "dependent_sectors": ["ISRO R&D", "Forestry & Disaster Research Teams"],
+          "disruption_consequence": "Interruption to experimental day/night thermal-IR payload validation and hazard observation demos."
+        },
+        {
+          "service_id": "flood_monitoring",
+          "service_name": "Experimental GNSS-R Soil Moisture & Flood Detection",
+          "criticality_tier": "MODERATE",
+          "dependent_sectors": ["ISRO SAC", "Hydrology Research Institutions"],
+          "disruption_consequence": "Loss of experimental GNSS-reflectometry hydrology datasets."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "National / Institutional",
+      "disaster_charter_eligible": false,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.45,
+        "service_dependency_breadth": 0.40,
+        "domestic_redundancy_scarcity": 0.65,
+        "sensor_uniqueness": 0.70
+      },
+      "sources": [
+        "ISRO SSLV-D3 / EOS-08 Mission Profile (isro.gov.in)"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "41752": {
+      "norad_id": 41752,
+      "cospar_id": "2016-054A",
+      "name": "INSAT-3DR",
+      "alternate_names": ["INSAT-3DR"],
+      "operator": "ISRO",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "GEO",
+      "orbit_type": "Geostationary Orbit (~74° E)",
+      "mission_type": "weather_meteorology",
+      "mission_categories": ["weather_meteorology", "disaster_monitoring", "cyclone_tracking", "search_and_rescue"],
+      "launch_date": "2016-09-08",
+      "mission_summary": "ISRO geostationary meteorological satellite providing continuous weather imaging, atmospheric sounding, Data Relay Transponder (DRT), and Satellite Aided Search and Rescue (SAS&R) over the Indian subcontinent and Indian Ocean.",
+      "sensors": [
+        {
+          "name": "6-Channel Imager & 19-Channel Sounder",
+          "modality": "GEO_IMAGER_SOUNDER",
+          "all_weather_capable": false,
+          "day_night_capable": true,
+          "spatial_resolution_m": 1000.0,
+          "swath_km": null,
+          "notes": "Continuous geostationary disk imaging (1 km visible, 4 km IR) and vertical atmospheric temperature/humidity profiling."
+        },
+        {
+          "name": "SAS&R & Data Relay Transponder",
+          "modality": "SEARCH_AND_RESCUE",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": null,
+          "swath_km": null,
+          "notes": "Relays emergency distress beacons (COSPAS-SARSAT) and automated weather station telemetry."
+        }
+      ],
+      "revisit_time_days": 0.02,
+      "coverage_regions": ["India", "South Asia", "Indian Ocean", "Bay of Bengal", "Arabian Sea"],
+      "active_service_dependencies": [
+        {
+          "service_id": "cyclone_tracking",
+          "service_name": "Continuous Geostationary Cyclone & Severe Storm Nowcasting",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["IMD", "NDMA", "Aviation Weather", "Coastal States"],
+          "disruption_consequence": "Reduced geostationary imaging redundancy over the Indian Ocean, impacting rapid-scan cyclone eye and convective storm monitoring."
+        },
+        {
+          "service_id": "weather_forecasting",
+          "service_name": "National Weather Forecasting & Monsoon Atmospheric Sounding",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["IMD", "Ministry of Earth Sciences", "Agriculture", "Aviation"],
+          "disruption_consequence": "Loss of half of India's dual-GEO meteorological observation continuity if paired assets are stressed."
+        },
+        {
+          "service_id": "search_and_rescue",
+          "service_name": "Satellite-Aided Search & Rescue (SAS&R) Beacon Relay",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["Indian Coast Guard", "Airports Authority of India", "Maritime Safety"],
+          "disruption_consequence": "Reduced geostationary distress-beacon relay capacity over the Indian Ocean search-and-rescue region."
+        }
+      ],
+      "constellation_peers": [58990],
+      "data_access_model": "National / Institutional",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.95,
+        "service_dependency_breadth": 0.95,
+        "domestic_redundancy_scarcity": 0.70,
+        "sensor_uniqueness": 0.85
+      },
+      "sources": [
+        "ISRO INSAT-3DR Mission Profile (isro.gov.in)",
+        "MOSDAC / IMD Meteorological Data Portal",
+        "WMO OSCAR Space: INSAT-3DR"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "58990": {
+      "norad_id": 58990,
+      "cospar_id": "2024-033A",
+      "name": "INSAT-3DS",
+      "alternate_names": ["INSAT-3DS"],
+      "operator": "ISRO",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "GEO",
+      "orbit_type": "Geostationary Orbit (~82° E)",
+      "mission_type": "weather_meteorology",
+      "mission_categories": ["weather_meteorology", "disaster_monitoring", "cyclone_tracking", "search_and_rescue"],
+      "launch_date": "2024-02-17",
+      "mission_summary": "ISRO follow-on geostationary meteorological satellite funded by the Ministry of Earth Sciences to provide enhanced continuous cyclone tracking, atmospheric sounding, DRT, and SAS&R services.",
+      "sensors": [
+        {
+          "name": "6-Channel Imager & 19-Channel Sounder",
+          "modality": "GEO_IMAGER_SOUNDER",
+          "all_weather_capable": false,
+          "day_night_capable": true,
+          "spatial_resolution_m": 1000.0,
+          "swath_km": null,
+          "notes": "Primary newest Indian geostationary meteorological imager/sounder supporting IMD operational forecasting."
+        },
+        {
+          "name": "SAS&R & Data Relay Transponder",
+          "modality": "SEARCH_AND_RESCUE",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": null,
+          "swath_km": null,
+          "notes": "Distress alert relay and meteorological data collection platform transponder."
+        }
+      ],
+      "revisit_time_days": 0.02,
+      "coverage_regions": ["India", "South Asia", "Indian Ocean", "Bay of Bengal", "Arabian Sea"],
+      "active_service_dependencies": [
+        {
+          "service_id": "cyclone_tracking",
+          "service_name": "Primary Geostationary Cyclone & Monsoon Tracking",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["IMD", "NDMA", "Ministry of Earth Sciences", "Coastal Evacuation Authorities"],
+          "disruption_consequence": "Potential service disruption to India's newest operational geostationary cyclone and thunderstorm nowcasting asset, forcing reliance on older INSAT-3DR."
+        },
+        {
+          "service_id": "weather_forecasting",
+          "service_name": "Operational Atmospheric Sounding & Numerical Weather Assimilation",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["IMD", "NCMRWF", "Aviation & Maritime Forecasting"],
+          "disruption_consequence": "Degraded real-time atmospheric profile assimilation for extreme precipitation and heatwave warnings."
+        },
+        {
+          "service_id": "search_and_rescue",
+          "service_name": "COSPAS-SARSAT Distress Alert Relay",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["Indian Coast Guard", "Indian Mission Control Centre (INMCC)"],
+          "disruption_consequence": "Reduced emergency beacon detection coverage in GEO over the Indian Ocean region."
+        }
+      ],
+      "constellation_peers": [41752],
+      "data_access_model": "National / Institutional",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.98,
+        "service_dependency_breadth": 0.95,
+        "domestic_redundancy_scarcity": 0.72,
+        "sensor_uniqueness": 0.85
+      },
+      "sources": [
+        "ISRO GSLV-F14 / INSAT-3DS Mission Profile (isro.gov.in)",
+        "WMO OSCAR Space: INSAT-3DS"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "45026": {
+      "norad_id": 45026,
+      "cospar_id": "2020-005A",
+      "name": "GSAT-30",
+      "alternate_names": ["GSAT-30"],
+      "operator": "ISRO",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "GEO",
+      "orbit_type": "Geostationary Orbit (~83° E)",
+      "mission_type": "communications",
+      "mission_categories": ["communications", "emergency_comms", "broadcast"],
+      "launch_date": "2020-01-17",
+      "mission_summary": "ISRO high-power geostationary C-band and Ku-band communication satellite supporting VSAT networks, DTH, television uplinking, and emergency/disaster communications across India and surrounding regions.",
+      "sensors": [
+        {
+          "name": "C-band & Ku-band Communication Transponders",
+          "modality": "COMMS_TRANSPONDER",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": null,
+          "swath_km": null,
+          "notes": "Ku-band coverage over Indian mainland and islands; extended C-band coverage across Asia/Gulf/Australia."
+        }
+      ],
+      "revisit_time_days": 0.01,
+      "coverage_regions": ["India", "South Asia", "Indian Ocean", "Middle East"],
+      "active_service_dependencies": [
+        {
+          "service_id": "emergency_comms",
+          "service_name": "VSAT, Remote Island & Emergency Disaster Communications",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["Disaster Emergency Comms", "Banking/ATM VSAT", "Remote & Island Connectivity", "Public Broadcasting"],
+          "disruption_consequence": "Potential outage or degradation of VSAT backhaul and emergency communications when terrestrial cellular/fiber networks fail during floods or cyclones."
+        }
+      ],
+      "constellation_peers": [52903],
+      "data_access_model": "National / Institutional",
+      "disaster_charter_eligible": false,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.78,
+        "service_dependency_breadth": 0.90,
+        "domestic_redundancy_scarcity": 0.55,
+        "sensor_uniqueness": 0.45
+      },
+      "sources": [
+        "ISRO GSAT-30 Mission Profile (isro.gov.in)"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "52903": {
+      "norad_id": 52903,
+      "cospar_id": "2022-067A",
+      "name": "GSAT-24",
+      "alternate_names": ["CMS-02"],
+      "operator": "ISRO / NSIL",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "GEO",
+      "orbit_type": "Geostationary Orbit (~83° E)",
+      "mission_type": "communications",
+      "mission_categories": ["communications", "broadcast", "emergency_comms"],
+      "launch_date": "2022-06-22",
+      "mission_summary": "24-Ku band geostationary communication satellite built by ISRO and operated by NewSpace India Limited (NSIL) for pan-India telecommunications and DTH broadcast.",
+      "sensors": [
+        {
+          "name": "24-Ku Band Communication Payload",
+          "modality": "COMMS_TRANSPONDER",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": null,
+          "swath_km": null,
+          "notes": "Pan-India Ku-band coverage co-located near 83° E orbital slot."
+        }
+      ],
+      "revisit_time_days": 0.01,
+      "coverage_regions": ["India", "South Asia"],
+      "active_service_dependencies": [
+        {
+          "service_id": "emergency_comms",
+          "service_name": "Pan-India Ku-Band Broadcast & Telecom Capacity",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Telecom Operators", "Broadcast Media", "Public Alert Dissemination"],
+          "disruption_consequence": "Degraded Ku-band broadcast capacity and reduced orbital transponder reserve at 83° E."
+        }
+      ],
+      "constellation_peers": [45026],
+      "data_access_model": "Commercial / Tasked",
+      "disaster_charter_eligible": false,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.55,
+        "service_dependency_breadth": 0.80,
+        "domestic_redundancy_scarcity": 0.50,
+        "sensor_uniqueness": 0.40
+      },
+      "sources": [
+        "ISRO / NSIL GSAT-24 Mission Profile (isro.gov.in)"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "56759": {
+      "norad_id": 56759,
+      "cospar_id": "2023-076A",
+      "name": "NVS-01",
+      "alternate_names": ["IRNSS-1J"],
+      "operator": "ISRO",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "GEO",
+      "orbit_type": "Geosynchronous Orbit",
+      "mission_type": "navigation",
+      "mission_categories": ["navigation", "timing", "maritime_safety"],
+      "launch_date": "2023-05-29",
+      "mission_summary": "First second-generation Indian Regional Navigation Satellite System (NavIC) spacecraft featuring L1, L5, and S-band signals and an indigenous Rubidium atomic clock.",
+      "sensors": [
+        {
+          "name": "NavIC L1 / L5 / S-Band PNT Payload",
+          "modality": "PNT_NAVIGATION",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": null,
+          "swath_km": null,
+          "notes": "Provides regional Positioning, Navigation, Timing (PNT) and short-message maritime/disaster alert broadcasts over India and +1,500 km surrounding region."
+        }
+      ],
+      "revisit_time_days": 0.01,
+      "coverage_regions": ["India", "South Asia", "Indian Ocean"],
+      "active_service_dependencies": [
+        {
+          "service_id": "navigation_pnt",
+          "service_name": "Regional Positioning, Navigation & Precision Timing (NavIC)",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["Aviation & Transport", "Telecom/Power Grid Timing", "Civilian L1 NavIC Devices"],
+          "disruption_consequence": "Reduced NavIC constellation geometry and L1 civilian signal availability over India."
+        },
+        {
+          "service_id": "maritime_safety",
+          "service_name": "NavIC Maritime & Fishermen Disaster Messaging",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["INCOIS", "Coastal Fisheries", "Maritime Safety"],
+          "disruption_consequence": "Potential disruption to one-way cyclone and high-wave warning broadcast redundancy for vessels at sea."
+        }
+      ],
+      "constellation_peers": [43286],
+      "data_access_model": "Open Public (NavIC Signal)",
+      "disaster_charter_eligible": false,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.80,
+        "service_dependency_breadth": 0.92,
+        "domestic_redundancy_scarcity": 0.85,
+        "sensor_uniqueness": 0.90
+      },
+      "sources": [
+        "ISRO GSLV-F12 / NVS-01 Mission Profile (isro.gov.in)"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "43286": {
+      "norad_id": 43286,
+      "cospar_id": "2018-035A",
+      "name": "IRNSS-1I",
+      "alternate_names": ["NavIC-1I"],
+      "operator": "ISRO",
+      "country": "India",
+      "operator_tier": "national_agency",
+      "orbit_regime": "GEO",
+      "orbit_type": "Inclined Geosynchronous Orbit (IGSO)",
+      "mission_type": "navigation",
+      "mission_categories": ["navigation", "timing", "maritime_safety"],
+      "launch_date": "2018-04-12",
+      "mission_summary": "First-generation NavIC regional navigation satellite operating in inclined geosynchronous orbit providing L5 and S-band positioning and timing over India.",
+      "sensors": [
+        {
+          "name": "NavIC L5 / S-Band PNT Payload",
+          "modality": "PNT_NAVIGATION",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": null,
+          "swath_km": null,
+          "notes": "L5 and S-band PNT signals (does not carry newer L1 band present on NVS-01)."
+        }
+      ],
+      "revisit_time_days": 0.01,
+      "coverage_regions": ["India", "South Asia", "Indian Ocean"],
+      "active_service_dependencies": [
+        {
+          "service_id": "navigation_pnt",
+          "service_name": "Regional Positioning & Timing Constellation Support",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Transport", "Critical Infrastructure Timing", "Surveying"],
+          "disruption_consequence": "Degraded NavIC Dilution of Precision (DOP) across the regional service footprint."
+        }
+      ],
+      "constellation_peers": [56759],
+      "data_access_model": "Open Public (NavIC Signal)",
+      "disaster_charter_eligible": false,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.68,
+        "service_dependency_breadth": 0.85,
+        "domestic_redundancy_scarcity": 0.78,
+        "sensor_uniqueness": 0.75
+      },
+      "sources": [
+        "ISRO PSLV-C41 / IRNSS-1I Mission Profile (isro.gov.in)"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "62701": {
+      "norad_id": 62701,
+      "cospar_id": "2025-009K",
+      "name": "Firefly-1",
+      "alternate_names": ["FF01", "Pixxel Firefly-1"],
+      "operator": "Pixxel",
+      "country": "India",
+      "operator_tier": "commercial_startup",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "experimental_cubesat",
+      "mission_categories": ["earth_observation", "hyperspectral", "commercial_smallsat", "agriculture"],
+      "launch_date": "2025-01-14",
+      "mission_summary": "Commercial hyperspectral imaging small satellite built by Indian space-tech startup Pixxel, capturing 135+ spectral bands for precision agriculture, water-quality assessment, and environmental monitoring.",
+      "sensors": [
+        {
+          "name": "Firefly Hyperspectral Imager (135+ VNIR/SWIR bands)",
+          "modality": "HYPERSPECTRAL",
+          "all_weather_capable": false,
+          "day_night_capable": false,
+          "spatial_resolution_m": 5.0,
+          "swath_km": 40.0,
+          "notes": "High-resolution commercial hyperspectral camera; requires clear-sky daylight conditions."
+        }
+      ],
+      "revisit_time_days": null,
+      "coverage_regions": ["India", "South Asia", "Global"],
+      "active_service_dependencies": [
+        {
+          "service_id": "environmental_hyperspectral",
+          "service_name": "Commercial Hyperspectral Environmental & Water-Quality Analytics",
+          "criticality_tier": "MODERATE",
+          "dependent_sectors": ["AgriTech Analytics", "Water Quality & Pollution Monitoring", "Mining & Forestry"],
+          "disruption_consequence": "Reduced revisit cadence for high-resolution commercial hyperspectral environmental monitoring and customer tasking."
+        },
+        {
+          "service_id": "agriculture_crop_monitoring",
+          "service_name": "Early Crop-Stress & Disease Spectral Detection",
+          "criticality_tier": "MODERATE",
+          "dependent_sectors": ["Commercial Agriculture", "Climate Risk Insurers"],
+          "disruption_consequence": "Delayed narrow-band spectral crop-health analytics over tasked agricultural zones."
+        }
+      ],
+      "constellation_peers": [62710],
+      "data_access_model": "Commercial / Tasked",
+      "disaster_charter_eligible": false,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.40,
+        "service_dependency_breadth": 0.55,
+        "domestic_redundancy_scarcity": 0.70,
+        "sensor_uniqueness": 0.88
+      },
+      "sources": [
+        "Pixxel Firefly Constellation Public Specifications",
+        "Public Orbital Catalog (NORAD 62701)"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "62710": {
+      "norad_id": 62710,
+      "cospar_id": "2025-009U",
+      "name": "Firefly-3",
+      "alternate_names": ["FF03", "Pixxel Firefly-3"],
+      "operator": "Pixxel",
+      "country": "India",
+      "operator_tier": "commercial_startup",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "experimental_cubesat",
+      "mission_categories": ["earth_observation", "hyperspectral", "commercial_smallsat", "agriculture"],
+      "launch_date": "2025-01-14",
+      "mission_summary": "Constellation peer to Firefly-1 in Pixxel's commercial hyperspectral imaging fleet, supporting global narrow-band environmental and crop health analytics.",
+      "sensors": [
+        {
+          "name": "Firefly Hyperspectral Imager (135+ bands)",
+          "modality": "HYPERSPECTRAL",
+          "all_weather_capable": false,
+          "day_night_capable": false,
+          "spatial_resolution_m": 5.0,
+          "swath_km": 40.0,
+          "notes": "Identical hyperspectral sensor architecture to Firefly-1."
+        }
+      ],
+      "revisit_time_days": null,
+      "coverage_regions": ["India", "South Asia", "Global"],
+      "active_service_dependencies": [
+        {
+          "service_id": "environmental_hyperspectral",
+          "service_name": "Commercial Hyperspectral Constellation Capacity",
+          "criticality_tier": "MODERATE",
+          "dependent_sectors": ["AgriTech Analytics", "Environmental Monitoring", "Climate Risk"],
+          "disruption_consequence": "Reduced constellation revisit capacity for hyperspectral tasking."
+        }
+      ],
+      "constellation_peers": [62701],
+      "data_access_model": "Commercial / Tasked",
+      "disaster_charter_eligible": false,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.40,
+        "service_dependency_breadth": 0.55,
+        "domestic_redundancy_scarcity": 0.65,
+        "sensor_uniqueness": 0.85
+      },
+      "sources": [
+        "Pixxel Firefly Constellation Public Specifications",
+        "Public Orbital Catalog (NORAD 62710)"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "58989": {
+      "norad_id": 58989,
+      "cospar_id": "2024-032C",
+      "name": "TIRSAT",
+      "alternate_names": ["TIRSAT 3U CubeSat"],
+      "operator": "University of Fukui / Japanese Space Consortium",
+      "country": "Japan",
+      "operator_tier": "university_experimental",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO ~660 km)",
+      "mission_type": "experimental_cubesat",
+      "mission_categories": ["experimental_cubesat", "earth_observation", "hyperspectral"],
+      "launch_date": "2024-02-17",
+      "mission_summary": "3U university-linked experimental Earth-observation CubeSat demonstrating a miniaturized Linear Variable Band-Pass Filter (LVBPF) hyperspectral camera for agricultural and forestry research.",
+      "sensors": [
+        {
+          "name": "Miniaturized LVBPF Hyperspectral Camera",
+          "modality": "HYPERSPECTRAL",
+          "all_weather_capable": false,
+          "day_night_capable": false,
+          "spatial_resolution_m": null,
+          "swath_km": null,
+          "notes": "Experimental 3U CubeSat optical/hyperspectral payload."
+        }
+      ],
+      "revisit_time_days": null,
+      "coverage_regions": ["Japan", "Asia-Pacific", "Global"],
+      "active_service_dependencies": [
+        {
+          "service_id": "research_education",
+          "service_name": "University CubeSat Remote-Sensing Technology Demonstration",
+          "criticality_tier": "LOW",
+          "dependent_sectors": ["University Researchers", "SmallSat Payload Validation"],
+          "disruption_consequence": "Potential interruption to academic hyperspectral calibration experiments (no operational emergency service dependency)."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "Research / Academic",
+      "disaster_charter_eligible": false,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.15,
+        "service_dependency_breadth": 0.20,
+        "domestic_redundancy_scarcity": 0.45,
+        "sensor_uniqueness": 0.50
+      },
+      "sources": [
+        "Nanosats Database: TIRSAT",
+        "Public Orbital Catalog (NORAD 58989)"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "39634": {
+      "norad_id": 39634,
+      "cospar_id": "2014-016A",
+      "name": "Sentinel-1A",
+      "alternate_names": ["SENTINEL-1A"],
+      "operator": "ESA / Copernicus",
+      "country": "European Union",
+      "operator_tier": "international_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "disaster_monitoring",
+      "mission_categories": ["earth_observation", "disaster_monitoring", "flood_mapping", "maritime_safety"],
+      "launch_date": "2014-04-03",
+      "mission_summary": "ESA Copernicus C-band SAR satellite delivering free and open all-weather radar imagery globally for flood monitoring, land deformation, and maritime surveillance.",
+      "sensors": [
+        {
+          "name": "C-SAR (5.405 GHz)",
+          "modality": "SAR_C_BAND",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": 5.0,
+          "swath_km": 250.0,
+          "notes": "Interferometric Wide Swath (IW) primary mode (~5x20 m resolution, 250 km swath); open Copernicus data access."
+        }
+      ],
+      "revisit_time_days": 12.0,
+      "coverage_regions": ["Global", "India", "South Asia", "Indian Ocean", "Europe"],
+      "active_service_dependencies": [
+        {
+          "service_id": "flood_monitoring",
+          "service_name": "Global Open-Access SAR Flood & Inundation Mapping",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["Copernicus EMS", "Global Disaster Relief", "Hydrology Agencies"],
+          "disruption_consequence": "Reduced open global C-band SAR pass frequency for emergency flood and landslide response."
+        },
+        {
+          "service_id": "cyclone_tracking",
+          "service_name": "SAR Ocean Surface Wind & Coastal Flooding Support",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Maritime Safety", "Coastal Disaster Agencies"],
+          "disruption_consequence": "Fewer high-resolution coastal SAR passes during severe storms."
+        },
+        {
+          "service_id": "agriculture_crop_monitoring",
+          "service_name": "Global All-Weather Crop & Soil Moisture Time-Series",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Global Food Security", "Agricultural Monitoring"],
+          "disruption_consequence": "Longer repeat intervals for radar-based agricultural monitoring."
+        }
+      ],
+      "constellation_peers": [62261],
+      "data_access_model": "Open Public (Copernicus)",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.92,
+        "service_dependency_breadth": 0.90,
+        "domestic_redundancy_scarcity": 0.55,
+        "sensor_uniqueness": 0.78
+      },
+      "sources": [
+        "ESA Copernicus Sentinel-1 Mission Overview (esa.int)",
+        "WMO OSCAR Space: Sentinel-1A"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "62261": {
+      "norad_id": 62261,
+      "cospar_id": "2024-235A",
+      "name": "Sentinel-1C",
+      "alternate_names": ["SENTINEL-1C"],
+      "operator": "ESA / Copernicus",
+      "country": "European Union",
+      "operator_tier": "international_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "disaster_monitoring",
+      "mission_categories": ["earth_observation", "disaster_monitoring", "flood_mapping", "maritime_safety"],
+      "launch_date": "2024-12-05",
+      "mission_summary": "ESA Copernicus C-band SAR satellite restoring two-satellite Sentinel-1 constellation revisit cadence with added AIS maritime tracking.",
+      "sensors": [
+        {
+          "name": "C-SAR (5.405 GHz)",
+          "modality": "SAR_C_BAND",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": 5.0,
+          "swath_km": 250.0,
+          "notes": "Open Copernicus C-band SAR in 180-degree orbital phasing with Sentinel-1A."
+        }
+      ],
+      "revisit_time_days": 12.0,
+      "coverage_regions": ["Global", "India", "South Asia", "Indian Ocean", "Europe"],
+      "active_service_dependencies": [
+        {
+          "service_id": "flood_monitoring",
+          "service_name": "Copernicus Open C-Band SAR Flood Mapping",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["Copernicus EMS", "International Disaster Charter", "National Hydrological Services"],
+          "disruption_consequence": "Loss of two-satellite Sentinel-1 6-day combined revisit cadence for global flood and deformation mapping."
+        },
+        {
+          "service_id": "maritime_safety",
+          "service_name": "SAR + AIS Maritime Surveillance & Oil-Spill Detection",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Maritime Safety Agencies", "Environmental Protection"],
+          "disruption_consequence": "Reduced radar-plus-AIS ship and spill monitoring coverage."
+        }
+      ],
+      "constellation_peers": [39634],
+      "data_access_model": "Open Public (Copernicus)",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.92,
+        "service_dependency_breadth": 0.88,
+        "domestic_redundancy_scarcity": 0.55,
+        "sensor_uniqueness": 0.80
+      },
+      "sources": [
+        "ESA Copernicus Sentinel-1C Mission Profile (esa.int)",
+        "WMO OSCAR Space: Sentinel-1C"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "39766": {
+      "norad_id": 39766,
+      "cospar_id": "2014-029A",
+      "name": "ALOS-2",
+      "alternate_names": ["Daichi-2"],
+      "operator": "JAXA",
+      "country": "Japan",
+      "operator_tier": "international_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "disaster_monitoring",
+      "mission_categories": ["earth_observation", "disaster_monitoring", "flood_mapping", "earthquake_monitoring"],
+      "launch_date": "2014-05-24",
+      "mission_summary": "JAXA L-band Synthetic Aperture Radar (PALSAR-2) satellite capable of penetrating dense vegetation canopies and cloud cover for flood, landslide, and crustal deformation assessment.",
+      "sensors": [
+        {
+          "name": "PALSAR-2 L-Band SAR (1.2 GHz)",
+          "modality": "SAR_L_BAND",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": 3.0,
+          "swath_km": 350.0,
+          "notes": "L-band wavelength penetrates forest canopies better than C-band; tasked via Sentinel Asia / International Charter during major disasters."
+        }
+      ],
+      "revisit_time_days": 14.0,
+      "coverage_regions": ["Global", "Asia-Pacific", "India", "South Asia"],
+      "active_service_dependencies": [
+        {
+          "service_id": "flood_monitoring",
+          "service_name": "Canopy-Penetrating L-Band SAR Flood & Wetland Mapping",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Sentinel Asia", "International Disaster Charter", "Forestry & Hydrology"],
+          "disruption_consequence": "Loss of specialized L-band radar capable of detecting standing water beneath dense tropical forest canopies."
+        },
+        {
+          "service_id": "disaster_damage_mapping",
+          "service_name": "InSAR Earthquake & Landslide Deformation Mapping",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["Seismic Monitoring Agencies", "Sentinel Asia"],
+          "disruption_consequence": "Reduced high-coherence L-band InSAR capability over vegetated mountainous terrain."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "International Charter / Tasked",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.88,
+        "service_dependency_breadth": 0.78,
+        "domestic_redundancy_scarcity": 0.82,
+        "sensor_uniqueness": 0.92
+      },
+      "sources": [
+        "JAXA ALOS-2 / PALSAR-2 Mission Page (eorc.jaxa.jp)",
+        "WMO OSCAR Space: ALOS-2"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "44322": {
+      "norad_id": 44322,
+      "cospar_id": "2019-033A",
+      "name": "RCM-1",
+      "alternate_names": ["RADARSAT Constellation Mission 1"],
+      "operator": "Canadian Space Agency (CSA)",
+      "country": "Canada",
+      "operator_tier": "international_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "disaster_monitoring",
+      "mission_categories": ["earth_observation", "disaster_monitoring", "maritime_safety", "flood_mapping"],
+      "launch_date": "2019-06-12",
+      "mission_summary": "C-band SAR satellite in Canada's three-satellite RADARSAT Constellation supporting maritime surveillance, disaster management, and ecosystem monitoring.",
+      "sensors": [
+        {
+          "name": "RCM C-Band SAR (5.405 GHz)",
+          "modality": "SAR_C_BAND",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": 3.0,
+          "swath_km": 500.0,
+          "notes": "Multi-mode C-band SAR; primary government access with International Charter support for major disasters."
+        }
+      ],
+      "revisit_time_days": 12.0,
+      "coverage_regions": ["Global", "North America", "India", "South Asia"],
+      "active_service_dependencies": [
+        {
+          "service_id": "flood_monitoring",
+          "service_name": "C-Band SAR Emergency Flood Support (Charter Eligible)",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Government of Canada", "International Disaster Charter"],
+          "disruption_consequence": "Reduced three-satellite SAR revisit cadence for emergency disaster response."
+        },
+        {
+          "service_id": "maritime_safety",
+          "service_name": "Maritime Vessel & Ice Surveillance",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Canadian Coast Guard", "Maritime Authorities"],
+          "disruption_consequence": "Lower radar surveillance refresh rates over maritime zones."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "International Charter / Tasked",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.84,
+        "service_dependency_breadth": 0.76,
+        "domestic_redundancy_scarcity": 0.60,
+        "sensor_uniqueness": 0.75
+      },
+      "sources": [
+        "Canadian Space Agency RCM Technical Characteristics (asc-csa.gc.ca)",
+        "CEOS EO Handbook: RCM-1"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "40697": {
+      "norad_id": 40697,
+      "cospar_id": "2015-028A",
+      "name": "Sentinel-2A",
+      "alternate_names": ["SENTINEL-2A"],
+      "operator": "ESA / Copernicus",
+      "country": "European Union",
+      "operator_tier": "international_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "earth_observation",
+      "mission_categories": ["earth_observation", "agriculture", "disaster_monitoring"],
+      "launch_date": "2015-06-23",
+      "mission_summary": "ESA Copernicus 13-band optical multispectral satellite providing free, global 10 m–60 m imagery for land monitoring, agriculture, and clear-sky disaster mapping.",
+      "sensors": [
+        {
+          "name": "MultiSpectral Instrument (MSI, 13 bands)",
+          "modality": "OPTICAL_MULTISPECTRAL",
+          "all_weather_capable": false,
+          "day_night_capable": false,
+          "spatial_resolution_m": 10.0,
+          "swath_km": 290.0,
+          "notes": "Open Copernicus optical data; cannot penetrate dense cloud cover during active storms."
+        }
+      ],
+      "revisit_time_days": 10.0,
+      "coverage_regions": ["Global", "India", "South Asia", "Europe"],
+      "active_service_dependencies": [
+        {
+          "service_id": "agriculture_crop_monitoring",
+          "service_name": "Global Open Multispectral Crop & Vegetation Monitoring",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Agricultural Agencies", "Forestry", "Environmental Research"],
+          "disruption_consequence": "Reduced optical revisit cadence for global land and crop time-series."
+        },
+        {
+          "service_id": "flood_monitoring",
+          "service_name": "Clear-Sky Post-Flood Surface Water & Damage Mapping",
+          "criticality_tier": "MODERATE",
+          "dependent_sectors": ["Copernicus EMS", "Hydrology Teams"],
+          "disruption_consequence": "Fewer clear-sky optical windows for post-event flood boundary verification."
+        }
+      ],
+      "constellation_peers": [42063],
+      "data_access_model": "Open Public (Copernicus)",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.74,
+        "service_dependency_breadth": 0.90,
+        "domestic_redundancy_scarcity": 0.45,
+        "sensor_uniqueness": 0.55
+      },
+      "sources": [
+        "ESA Copernicus Sentinel-2 Mission Overview (esa.int)",
+        "WMO OSCAR Space: Sentinel-2A"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "42063": {
+      "norad_id": 42063,
+      "cospar_id": "2017-013A",
+      "name": "Sentinel-2B",
+      "alternate_names": ["SENTINEL-2B"],
+      "operator": "ESA / Copernicus",
+      "country": "European Union",
+      "operator_tier": "international_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "earth_observation",
+      "mission_categories": ["earth_observation", "agriculture", "disaster_monitoring"],
+      "launch_date": "2017-03-07",
+      "mission_summary": "Twin Copernicus optical multispectral satellite operating in complementary phase with Sentinel-2A for 5-day combined global revisit.",
+      "sensors": [
+        {
+          "name": "MultiSpectral Instrument (MSI, 13 bands)",
+          "modality": "OPTICAL_MULTISPECTRAL",
+          "all_weather_capable": false,
+          "day_night_capable": false,
+          "spatial_resolution_m": 10.0,
+          "swath_km": 290.0,
+          "notes": "Open Copernicus optical data; subject to cloud obscuration."
+        }
+      ],
+      "revisit_time_days": 10.0,
+      "coverage_regions": ["Global", "India", "South Asia", "Europe"],
+      "active_service_dependencies": [
+        {
+          "service_id": "agriculture_crop_monitoring",
+          "service_name": "Global Open Multispectral Crop & Vegetation Monitoring",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Agricultural Agencies", "Land Cover Monitoring"],
+          "disruption_consequence": "Longer intervals between cloud-free optical land observations."
+        },
+        {
+          "service_id": "flood_monitoring",
+          "service_name": "Clear-Sky Post-Flood Extent Verification",
+          "criticality_tier": "MODERATE",
+          "dependent_sectors": ["Copernicus EMS", "Emergency Mapping"],
+          "disruption_consequence": "Reduced clear-sky optical verification passes."
+        }
+      ],
+      "constellation_peers": [40697],
+      "data_access_model": "Open Public (Copernicus)",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.74,
+        "service_dependency_breadth": 0.88,
+        "domestic_redundancy_scarcity": 0.45,
+        "sensor_uniqueness": 0.55
+      },
+      "sources": [
+        "ESA Copernicus Sentinel-2B Mission Overview (esa.int)",
+        "WMO OSCAR Space: Sentinel-2B"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "49260": {
+      "norad_id": 49260,
+      "cospar_id": "2021-088A",
+      "name": "Landsat-9",
+      "alternate_names": ["LANDSAT 9"],
+      "operator": "NASA / USGS",
+      "country": "United States",
+      "operator_tier": "international_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "earth_observation",
+      "mission_categories": ["earth_observation", "agriculture", "thermal_monitoring", "disaster_monitoring"],
+      "launch_date": "2021-09-27",
+      "mission_summary": "NASA/USGS Earth-observation satellite combining OLI-2 multispectral optical imaging (30 m) and TIRS-2 thermal infrared sensing (100 m) with open global data access.",
+      "sensors": [
+        {
+          "name": "OLI-2 Operational Land Imager",
+          "modality": "OPTICAL_MULTISPECTRAL",
+          "all_weather_capable": false,
+          "day_night_capable": false,
+          "spatial_resolution_m": 30.0,
+          "swath_km": 185.0,
+          "notes": "9-band multispectral (15 m panchromatic); open USGS archive."
+        },
+        {
+          "name": "TIRS-2 Thermal Infrared Sensor",
+          "modality": "THERMAL_IR",
+          "all_weather_capable": false,
+          "day_night_capable": true,
+          "spatial_resolution_m": 100.0,
+          "swath_km": 185.0,
+          "notes": "2-band thermal infrared for land surface temperature, drought stress, and wildfire assessment."
+        }
+      ],
+      "revisit_time_days": 16.0,
+      "coverage_regions": ["Global", "India", "South Asia", "North America"],
+      "active_service_dependencies": [
+        {
+          "service_id": "agriculture_crop_monitoring",
+          "service_name": "Long-Term Land, Water & Evapotranspiration Monitoring",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Hydrology", "Agriculture", "Climate Science"],
+          "disruption_consequence": "Reduced open thermal-IR and multispectral land-surface continuity."
+        },
+        {
+          "service_id": "wildfire_thermal_monitoring",
+          "service_name": "Thermal-IR Burn Scar & Heat Anomaly Mapping",
+          "criticality_tier": "MODERATE",
+          "dependent_sectors": ["Forestry", "Disaster Mapping"],
+          "disruption_consequence": "Longer repeat gap for calibrated thermal-IR surface mapping."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "Open Public (USGS/NOAA)",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.65,
+        "service_dependency_breadth": 0.85,
+        "domestic_redundancy_scarcity": 0.50,
+        "sensor_uniqueness": 0.68
+      },
+      "sources": [
+        "USGS Landsat 9 Mission Specifications (usgs.gov)",
+        "WMO OSCAR Space: Landsat-9"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "41836": {
+      "norad_id": 41836,
+      "cospar_id": "2016-064A",
+      "name": "Himawari-9",
+      "alternate_names": ["HIMAWARI-9"],
+      "operator": "Japan Meteorological Agency (JMA)",
+      "country": "Japan",
+      "operator_tier": "international_agency",
+      "orbit_regime": "GEO",
+      "orbit_type": "Geostationary Orbit (~140.7° E)",
+      "mission_type": "weather_meteorology",
+      "mission_categories": ["weather_meteorology", "cyclone_tracking", "disaster_monitoring"],
+      "launch_date": "2016-11-02",
+      "mission_summary": "JMA geostationary weather satellite carrying the 16-band Advanced Himawari Imager (AHI) providing 10-minute full-disk weather imaging across Asia-Pacific, with oblique coverage extending over the Bay of Bengal and Eastern India.",
+      "sensors": [
+        {
+          "name": "Advanced Himawari Imager (AHI, 16 bands)",
+          "modality": "GEO_IMAGER_SOUNDER",
+          "all_weather_capable": false,
+          "day_night_capable": true,
+          "spatial_resolution_m": 500.0,
+          "swath_km": null,
+          "notes": "Full-disk every 10 minutes; viewing angle becomes oblique over Western India / Arabian Sea."
+        }
+      ],
+      "revisit_time_days": 0.01,
+      "coverage_regions": ["Asia-Pacific", "Bay of Bengal", "Eastern India", "Japan", "Indian Ocean"],
+      "active_service_dependencies": [
+        {
+          "service_id": "cyclone_tracking",
+          "service_name": "Asia-Pacific & Eastern Indian Ocean Cyclone Nowcasting",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["JMA", "WMO Regional Centres", "Aviation Weather"],
+          "disruption_consequence": "Loss of primary 10-minute geostationary weather feed across East Asia and Western Pacific."
+        },
+        {
+          "service_id": "weather_forecasting",
+          "service_name": "Rapid-Scan Convective Storm & Volcanic Ash Monitoring",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["Meteorological Agencies", "Aviation"],
+          "disruption_consequence": "Degraded high-frequency storm and ash cloud monitoring across Asia-Pacific."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "Open Public (WMO / JMA)",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.95,
+        "service_dependency_breadth": 0.92,
+        "domestic_redundancy_scarcity": 0.70,
+        "sensor_uniqueness": 0.85
+      },
+      "sources": [
+        "JMA Himawari-8/9 Specifications (data.jma.go.jp)",
+        "WMO OSCAR Space: Himawari-9"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "28912": {
+      "norad_id": 28912,
+      "cospar_id": "2005-049B",
+      "name": "Meteosat-9",
+      "alternate_names": ["MSG-2", "Meteosat-9 IODC"],
+      "operator": "EUMETSAT",
+      "country": "European Union",
+      "operator_tier": "international_agency",
+      "orbit_regime": "GEO",
+      "orbit_type": "Geostationary Orbit (~45.5° E IODC Slot)",
+      "mission_type": "weather_meteorology",
+      "mission_categories": ["weather_meteorology", "cyclone_tracking", "disaster_monitoring"],
+      "launch_date": "2005-12-21",
+      "mission_summary": "EUMETSAT geostationary meteorological satellite stationed for Indian Ocean Data Coverage (IODC), providing 15-minute SEVIRI weather imagery covering the Arabian Sea, Indian Ocean, and Indian subcontinent.",
+      "sensors": [
+        {
+          "name": "SEVIRI 12-Channel Imager",
+          "modality": "GEO_IMAGER_SOUNDER",
+          "all_weather_capable": false,
+          "day_night_capable": true,
+          "spatial_resolution_m": 1000.0,
+          "swath_km": null,
+          "notes": "15-minute full-disk repeat over the Indian Ocean Data Coverage (IODC) footprint; does not replace INSAT SAS&R/DRT domestic transponders."
+        }
+      ],
+      "revisit_time_days": 0.01,
+      "coverage_regions": ["Indian Ocean", "Arabian Sea", "India", "South Asia", "Middle East", "East Africa"],
+      "active_service_dependencies": [
+        {
+          "service_id": "cyclone_tracking",
+          "service_name": "Indian Ocean Data Coverage (IODC) Cyclone & Monsoon Imaging",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["EUMETSAT", "WMO Indian Ocean Centres", "Maritime Meteorology"],
+          "disruption_consequence": "Reduced geostationary weather coverage over the western Indian Ocean and Arabian Sea."
+        },
+        {
+          "service_id": "weather_forecasting",
+          "service_name": "Regional Geostationary Weather & Dust/Cloud Monitoring",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["Meteorological Services", "Aviation"],
+          "disruption_consequence": "Loss of complementary 15-minute IODC geostationary imagery."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "Open Public (EUMETSAT / WMO)",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.88,
+        "service_dependency_breadth": 0.85,
+        "domestic_redundancy_scarcity": 0.65,
+        "sensor_uniqueness": 0.78
+      },
+      "sources": [
+        "EUMETSAT Meteosat Indian Ocean Data Coverage (eumetsat.int)",
+        "WMO OSCAR Space: Meteosat-9"
+      ],
+      "data_provenance": "verified_public_catalog"
+    },
+    "43013": {
+      "norad_id": 43013,
+      "cospar_id": "2017-073A",
+      "name": "NOAA-20",
+      "alternate_names": ["JPSS-1"],
+      "operator": "NOAA / NASA",
+      "country": "United States",
+      "operator_tier": "international_agency",
+      "orbit_regime": "LEO",
+      "orbit_type": "Sun-Synchronous Orbit (SSO)",
+      "mission_type": "weather_meteorology",
+      "mission_categories": ["weather_meteorology", "cyclone_tracking", "disaster_monitoring"],
+      "launch_date": "2017-11-18",
+      "mission_summary": "NOAA/NASA polar-orbiting operational meteorological satellite carrying VIIRS, CrIS, and ATMS to feed global numerical weather prediction models, storm profiling, and nighttime flood/fire detection.",
+      "sensors": [
+        {
+          "name": "VIIRS (Visible Infrared Imaging Radiometer Suite)",
+          "modality": "THERMAL_IR",
+          "all_weather_capable": false,
+          "day_night_capable": true,
+          "spatial_resolution_m": 375.0,
+          "swath_km": 3040.0,
+          "notes": "Wide-swath day/night visible and thermal IR imaging for fires, sea surface temp, and flood composites."
+        },
+        {
+          "name": "ATMS / CrIS Atmospheric Sounders",
+          "modality": "GEO_IMAGER_SOUNDER",
+          "all_weather_capable": true,
+          "day_night_capable": true,
+          "spatial_resolution_m": null,
+          "swath_km": 2200.0,
+          "notes": "Polar-orbiting microwave/IR atmospheric sounding (twice daily per location, NOT continuous geostationary monitoring)."
+        }
+      ],
+      "revisit_time_days": 0.5,
+      "coverage_regions": ["Global", "India", "South Asia", "Indian Ocean"],
+      "active_service_dependencies": [
+        {
+          "service_id": "weather_forecasting",
+          "service_name": "Global Numerical Weather Prediction (NWP) Sounding Assimilation",
+          "criticality_tier": "CRITICAL",
+          "dependent_sectors": ["Global NWP Centres", "IMD Assimilation", "Severe Weather Forecasting"],
+          "disruption_consequence": "Degraded global atmospheric temperature/moisture sounding assimilation for 3-to-7-day storm track forecasts."
+        },
+        {
+          "service_id": "wildfire_thermal_monitoring",
+          "service_name": "Global Active Fire & Thermal Anomaly Detection",
+          "criticality_tier": "HIGH",
+          "dependent_sectors": ["NASA FIRMS", "Forestry & Disaster Agencies"],
+          "disruption_consequence": "Reduced twice-daily global 375 m active-fire detections."
+        }
+      ],
+      "constellation_peers": [],
+      "data_access_model": "Open Public (USGS/NOAA)",
+      "disaster_charter_eligible": true,
+      "mission_criticality_factors": {
+        "disaster_response_reliance": 0.88,
+        "service_dependency_breadth": 0.92,
+        "domestic_redundancy_scarcity": 0.55,
+        "sensor_uniqueness": 0.80
+      },
+      "sources": [
+        "NOAA JPSS / NOAA-20 Mission Specifications (nesdis.noaa.gov)",
+        "WMO OSCAR Space: NOAA-20"
+      ],
+      "data_provenance": "verified_public_catalog"
+    }
+  }
+}

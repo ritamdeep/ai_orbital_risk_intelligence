@@ -1,0 +1,16 @@
+{
+  "event_id": "sim-smallsat-firefly1-20261122T154500Z",
+  "primary_norad_id": 62701,
+  "primary_name": "Firefly-1",
+  "secondary_norad_id": 34454,
+  "secondary_name": "COSMOS 2251 DEB",
+  "secondary_object_type": "DEBRIS",
+  "tca_utc": "2026-11-22T15:45:00Z",
+  "miss_distance_km": 2.1,
+  "relative_velocity_kms": 13.4,
+  "tle_epoch_age_hours": 18.0,
+  "active_earth_events": [],
+  "data_provenance": "simulated_scenario",
+  "include_ai_explanation": true,
+  "max_alternatives": 5
+}
