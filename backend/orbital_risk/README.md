@@ -1,26 +1,28 @@
-# ASTRAVIGIL — Orbital Risk & Debris Engine
+# ASTRAVIGIL — Orbital Risk Engine
 
-**Module:** Member 2 (`feature/orbital-risk`)  
+**Module:** Orbital Risk & Debris Engine (`feature/orbital-risk`)  
 **Platform:** ASTRAVIGIL — AI-Powered Orbital Risk Intelligence & Satellite-Service Continuity Platform
 
 ---
 
 ## Overview
 
-The **Orbital Risk & Debris Engine** provides deterministic orbital mechanics and conjunction screening capabilities for ASTRAVIGIL:
-- **CelesTrak Ingestion & Caching:** Ingests General Perturbations (GP) / Orbit Mean-elements Messages (OMM) with transparent offline fallback.
-- **SGP4 / SDP4 Orbital Propagation:** Standard NORAD propagation producing TEME ECI and WGS84 Geodetic positions (lat, lon, alt) and speeds.
-- **Forward Ephemeris Generation:** Trajectory points for Member 1's 3D Globe visualization.
-- **Two-Tier Conjunction Screening:**
-  1. *Geometric Filter:* Fast apogee-perigee altitude shell evaluation.
-  2. *SGP4 Time-Stepping:* Coarse scan + fine-grained TCA (Time of Closest Approach), miss distance, and relative velocity vector refinement.
-- **Scientific Labeling:** Adheres to all space safety rules; outputs preliminary screening events without fabricating collision probabilities ($P_c$).
+The **Orbital Risk Engine** implements the shared ASTRAVIGIL API contract on port 8000. It provides physical SGP4 propagation and preliminary close-approach screening between operational satellites and catalogued space debris without calculating or displaying fabricated collision probabilities.
+
+### Key Capabilities:
+- **Seed Objects Ingestion:** Tracks 5 priority operational Indian satellites (`CARTOSAT-3`, `EOS-04 (RISAT-1A)`, `PRATHAM`, `OCEANSAT-3`, `INSAT-3DR`) and 4 space debris objects (`FENGYUN 1C DEBRIS`, `COSMOS 2251 DEBRIS`, `SL-16 R/B DEBRIS`, `CZ-4C DEBRIS`).
+- **CelesTrak GP/TLE Live Sync:** Connects to CelesTrak with 4-hour disk cache TTL and rate-limiting protection.
+- **Offline Reliability:** Bundles `data/sample_tles.txt` as a fallback seed source (tagged `dataSource: "mock"`). Data fetched live from CelesTrak is stamped `dataSource: "real"`.
+- **SGP4 Propagation:** Vectorized calculations yielding TEME coordinates and WGS84 Geodetic position (latitude, longitude, altitude).
+- **Two-Tier Conjunction Screening:** Apogee-perigee altitude pre-filter followed by coarse-to-fine SGP4 step propagation locating the Time of Closest Approach (TCA), minimum miss distance, relative velocity, and positional uncertainty (`tleUncertaintyKm`).
+- **60-Second Cache:** The conjunction screening endpoint caches evaluations for ~60 seconds for sub-millisecond responses.
+- **Strict Scientific Compliance:** No field named `probability`, `pc`, or `risk_percentage` is produced in any endpoint or log. All events are documented as flagged close approaches with explicit screening notes.
 
 ---
 
 ## Setup & Running
 
-### 1. Prerequisites
+### 1. Requirements
 - Python 3.10+ (tested on Python 3.14)
 
 ### 2. Install Dependencies
@@ -29,39 +31,62 @@ cd backend/orbital_risk
 pip install -r requirements.txt
 ```
 
-### 3. Run the Server
+### 3. Environment Configuration
+Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+Default configuration allows CORS for `http://localhost:5173`.
+
+### 4. Run the Server
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
-Interactive API documentation will be available at:
+Interactive OpenAPI documentation:
 - **Swagger UI:** `http://localhost:8000/docs`
 - **ReDoc:** `http://localhost:8000/redoc`
 
-### 4. Run Tests
+### 5. Run the Test Suite
 ```bash
 pytest app/orbital_engine/tests -v
 ```
 
 ---
 
-## API Endpoints Summary
+## API Endpoints (Port 8000)
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/` | System banner and active module metadata |
-| `GET` | `/api/health` | High-level service health check |
-| `GET` | `/api/orbital/health` | Engine status, catalog cache counts, active branch |
-| `GET` | `/api/orbital/objects` | Query tracked operational satellites and debris (`type`, `search`, `limit`) |
-| `GET` | `/api/orbital/objects/{norad_id}` | Detailed orbital elements for a specific NORAD object |
-| `GET` | `/api/orbital/objects/{norad_id}/ephemeris` | Forward trajectory coordinates (Lat, Lon, Alt, ECI) for 3D Globe |
-| `GET` | `/api/orbital/debris` | Dedicated catalog of catalogued space debris and rocket bodies |
-| `POST`| `/api/orbital/screenings` | Trigger on-demand conjunction screening for a target satellite |
-| `GET` | `/api/orbital/events` | List preliminary close-approach screening events |
-| `GET` | `/api/orbital/events/{event_id}` | Detailed encounter kinematics and miss-distance breakdown |
+| Method | Endpoint | Query / Path Parameters | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/health` | None | Service health, TLE source (`celestrak` vs `mock`), and object count |
+| `GET` | `/api/orbital/satellites` | `type` (optional: `payload`, `debris`, `rocket_body`) | List tracked satellites with SGP4 positions |
+| `GET` | `/api/orbital/satellites/{noradId}` | `noradId` (integer) | Detailed state for single satellite (404 if not found, 422 if invalid) |
+| `GET` | `/api/orbital/conjunctions` | `windowHours` (default 48.0), `maxSeparationKm` (default 100.0) | List flagged close approaches within threshold |
+| `GET` | `/api/orbital/conjunctions/{eventId}` | `eventId` (format: `CONJ-YYYY-NNNN`) | Detailed kinematics for a specific conjunction event |
 
 ---
 
-## Scientific Disclaimers
+## Standard Error Response Format
 
-All close-approach screening outputs are strictly labeled:
-> **PRELIMINARY_SCREENING_ONLY:** Deterministic SGP4 propagation from mean orbital elements. This is NOT a validated Conjunction Assessment and does NOT calculate collision probability ($P_c$). No covariance error ellipsoids are modeled in TLE data.
+HTTP 404 (Not Found):
+```json
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Satellite with NORAD ID 999999 not found in catalog",
+    "details": null
+  },
+  "detail": "Satellite with NORAD ID 999999 not found in catalog"
+}
+```
+
+HTTP 422 (Unprocessable Content):
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid request parameter",
+    "details": [...]
+  },
+  "detail": [...]
+}
+```
