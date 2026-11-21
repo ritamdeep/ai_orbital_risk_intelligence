@@ -1,226 +1,198 @@
-"""FastAPI REST endpoints for ASTRAVIGIL Mission Intelligence (Member 3).
+"""FastAPI REST endpoints implementing ASTRAVIGIL's shared Mission Intelligence API contract.
 
-Exposed endpoints:
-- GET  /api/health
-- GET  /api/missions
-- GET  /api/missions/{norad_id}
-- POST /api/analyze-impact
-- GET  /api/alternatives/{norad_id}
-
-Mount into a unified FastAPI backend with:
-    from backend.mission_intelligence import mission_router
-    app.include_router(mission_router)
+Endpoints (port 8001):
+- GET  /health
+- GET  /api/mission/satellites
+- GET  /api/mission/satellites/{noradId}/capabilities
+- GET  /api/mission/satellites/{noradId}/criticality
+- GET  /api/mission/satellites/{noradId}/alternatives
+- POST /api/mission/satellites/{noradId}/briefing
 """
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, Query
 
-from .ai_explainer import generate_risk_explanation, get_llm_status
-from .continuity_engine import run_continuity_analysis
+from .ai_explainer import generate_briefing
+from .config import CRITICALITY_METHODOLOGY, DEFAULT_PORT, get_llm_api_key
+from .continuity_engine import find_alternatives
 from .database import MissionDatabase, get_mission_db
 from .schemas import (
-    ActiveEarthEvent,
-    ConjunctionAlertInput,
-    ContinuityAnalysisResponse,
-    DataProvenance,
-    ImpactAnalysisResponse,
-    MissionListResponse,
-    MissionProfileResponse,
-    MissionType,
-    SensorModality,
-    SeverityTier,
+    AlternativesResponse,
+    BriefingRequest,
+    BriefingResponse,
+    CapabilitiesResponse,
+    CriticalityResponse,
+    HealthResponse,
+    SatelliteListResponse,
+    SatelliteRecord,
+    SatelliteSummaryItem,
 )
-from .scoring_engine import (
-    compute_earth_impact,
-    compute_explainable_priority,
-    compute_mission_criticality,
+from .scoring_engine import compute_criticality, compute_criticality_summary
+
+
+class MissionApiError(Exception):
+    """Structured API error converted to the standard error envelope by app exception handlers."""
+
+    def __init__(
+        self,
+        *,
+        status_code: int,
+        code: str,
+        message: str,
+        details: Optional[dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.code = code
+        self.message = message
+        self.details = details
+
+
+router = APIRouter(tags=["ASTRAVIGIL Mission Intelligence"])
+
+
+def _require_satellite(norad_id: int, db: MissionDatabase) -> SatelliteRecord:
+    satellite = db.get_by_norad_id(norad_id)
+    if satellite is None:
+        raise MissionApiError(
+            status_code=404,
+            code="SATELLITE_NOT_FOUND",
+            message=f"Satellite with NORAD ID {norad_id} was not found in the mission database.",
+            details={"noradId": norad_id},
+        )
+    return satellite
+
+
+@router.get("/health", response_model=HealthResponse)
+def health_check(db: MissionDatabase = Depends(get_mission_db)) -> HealthResponse:
+    """Service health, loaded mission catalog size, and LLM configuration status."""
+    return HealthResponse(
+        status="ok",
+        service="astravigil-mission-intelligence",
+        port=DEFAULT_PORT,
+        satellitesLoaded=db.count(),
+        methodology=CRITICALITY_METHODOLOGY,
+        llmConfigured=bool(get_llm_api_key()),
+        dataSource="real",
+    )
+
+
+@router.get("/api/mission/satellites", response_model=SatelliteListResponse)
+def list_satellites(
+    category: Optional[str] = Query(default=None),
+    operator: Optional[str] = Query(default=None),
+    status: Optional[str] = Query(default=None),
+    search: Optional[str] = Query(default=None),
+    db: MissionDatabase = Depends(get_mission_db),
+) -> SatelliteListResponse:
+    """List satellites in the mission database with capabilities and criticality summaries."""
+    records = db.filter_satellites(
+        category=category,
+        operator=operator,
+        status=status,
+        search=search,
+    )
+    items = [
+        SatelliteSummaryItem(
+            noradId=sat.noradId,
+            verifiedNoradId=sat.verifiedNoradId,
+            cosparId=sat.cosparId,
+            name=sat.name,
+            operator=sat.operator,
+            country=sat.country,
+            category=sat.category,
+            orbitRegime=sat.orbitRegime,
+            orbitSubtype=sat.orbitSubtype,
+            status=sat.status,
+            launchYear=sat.launchYear,
+            missionSummary=sat.missionSummary,
+            capabilities=sat.capabilities,
+            supportedServices=sat.supportedServices,
+            criticality=compute_criticality_summary(sat),
+            dataSource=sat.dataSource,
+            sources=sat.sources,
+        )
+        for sat in records
+    ]
+    return SatelliteListResponse(
+        satellites=items,
+        total=len(items),
+        methodology=CRITICALITY_METHODOLOGY,
+    )
+
+
+@router.get(
+    "/api/mission/satellites/{noradId}/capabilities",
+    response_model=CapabilitiesResponse,
 )
-
-router = APIRouter(prefix="/api", tags=["ASTRAVIGIL Mission Intelligence"])
-
-
-@router.get("/health")
-def health_check(db: MissionDatabase = Depends(get_mission_db)) -> dict[str, object]:
-    """Verify module health, curated mission catalog count, and AI explainer mode."""
-    return {
-        "status": "ok",
-        "module": "mission_intelligence",
-        "catalog_satellites_loaded": db.count(),
-        "catalog_version": db.metadata.get("schema_version", "1.0.0"),
-        "ai_explainer": get_llm_status(),
-    }
-
-
-@router.get("/missions", response_model=MissionListResponse)
-def list_missions(
-    mission_type: Optional[MissionType] = Query(default=None),
-    country: Optional[str] = Query(default=None),
-    service_id: Optional[str] = Query(default=None),
-    sensor_modality: Optional[SensorModality] = Query(default=None),
-    region: Optional[str] = Query(default=None),
+def get_satellite_capabilities(
+    noradId: int,
     db: MissionDatabase = Depends(get_mission_db),
-) -> MissionListResponse:
-    """List verified satellite missions with optional filters for frontend catalogs."""
-    satellites = db.filter_missions(
-        mission_type=mission_type,
-        country=country,
-        service_id=service_id,
-        sensor_modality=sensor_modality,
-        region=region,
-    )
-    return MissionListResponse(
-        total=len(satellites),
-        satellites=satellites,
-        provenance=DataProvenance(
-            mission_data_provenance="verified_public_catalog",
-            conjunction_data_provenance="real",
-        ),
+) -> CapabilitiesResponse:
+    """Return sensor capabilities, supported Earth services, and per-field provenance."""
+    sat = _require_satellite(noradId, db)
+    return CapabilitiesResponse(
+        noradId=sat.noradId,
+        verifiedNoradId=sat.verifiedNoradId,
+        name=sat.name,
+        operator=sat.operator,
+        country=sat.country,
+        category=sat.category,
+        orbitRegime=sat.orbitRegime,
+        orbitSubtype=sat.orbitSubtype,
+        status=sat.status,
+        launchYear=sat.launchYear,
+        missionSummary=sat.missionSummary,
+        capabilities=sat.capabilities,
+        supportedServices=sat.supportedServices,
+        dataSource=sat.dataSource,
+        fieldProvenance=sat.fieldProvenance,
+        sources=sat.sources,
     )
 
 
-@router.get("/missions/{norad_id}", response_model=MissionProfileResponse)
-def get_mission_profile(
-    norad_id: int,
+@router.get(
+    "/api/mission/satellites/{noradId}/criticality",
+    response_model=CriticalityResponse,
+)
+def get_satellite_criticality(
+    noradId: int,
     db: MissionDatabase = Depends(get_mission_db),
-) -> MissionProfileResponse:
-    """Return satellite mission profile, sensor capabilities, and baseline criticality."""
-    mission = db.get_by_norad_id(norad_id)
-    if mission is None:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "error": "MISSION_NOT_FOUND",
-                "norad_id": norad_id,
-                "message": (
-                    f"NORAD ID {norad_id} is not in ASTRAVIGIL's verified mission catalog. "
-                    "Use GET /api/missions to inspect catalogued satellites."
-                ),
-            },
-        )
-
-    return MissionProfileResponse(
-        mission=mission,
-        baseline_criticality=compute_mission_criticality(mission),
-        baseline_earth_impact=compute_earth_impact(mission),
-        provenance=DataProvenance(
-            mission_data_provenance="verified_public_catalog",
-            conjunction_data_provenance="real",
-        ),
-    )
+) -> CriticalityResponse:
+    """Return deterministic rule_based_v1 criticality score, tier, and weighted factor breakdown."""
+    sat = _require_satellite(noradId, db)
+    return compute_criticality(sat)
 
 
-@router.get("/alternatives/{norad_id}", response_model=ContinuityAnalysisResponse)
-def get_alternative_satellites(
-    norad_id: int,
-    max_results: int = Query(default=5, ge=1, le=10),
-    active_event_type: Optional[str] = Query(
-        default=None,
-        description="Optional active disaster context (e.g., flood_alert, cyclone_alert).",
-    ),
-    active_region: Optional[str] = Query(
-        default=None,
-        description="Optional region for active disaster context (e.g., Assam, India).",
-    ),
+@router.get(
+    "/api/mission/satellites/{noradId}/alternatives",
+    response_model=AlternativesResponse,
+)
+def get_satellite_alternatives(
+    noradId: int,
+    maxResults: int = Query(default=5, ge=1, le=10),
     db: MissionDatabase = Depends(get_mission_db),
-) -> ContinuityAnalysisResponse:
-    """Return overlapping backup satellites, service disruptions, and redundancy gaps."""
-    mission = db.get_by_norad_id(norad_id)
-    if mission is None:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "error": "MISSION_NOT_FOUND",
-                "norad_id": norad_id,
-                "message": (
-                    f"Cannot compute verified alternatives because NORAD ID {norad_id} is not "
-                    "present in ASTRAVIGIL's mission database."
-                ),
-            },
-        )
-
-    events: list[ActiveEarthEvent] = []
-    if active_event_type:
-        try:
-            events.append(
-                ActiveEarthEvent(
-                    event_type=active_event_type,  # type: ignore[arg-type]
-                    region=active_region or "India",
-                    severity=SeverityTier.HIGH,
-                )
-            )
-        except Exception as exc:
-            raise HTTPException(status_code=422, detail=f"Invalid active_event_type: {exc}") from exc
-
-    return run_continuity_analysis(
-        norad_id,
-        db,
-        active_earth_events=events,
-        max_results=max_results,
-        conjunction_provenance="real",
-    )
+) -> AlternativesResponse:
+    """Return overlapping alternative satellites, per-field comparisons, redundancy gaps, and caveat."""
+    sat = _require_satellite(noradId, db)
+    return find_alternatives(sat, db, max_results=maxResults)
 
 
-@router.post("/analyze-impact", response_model=ImpactAnalysisResponse)
-def analyze_conjunction_impact(
-    alert: ConjunctionAlertInput,
+@router.post(
+    "/api/mission/satellites/{noradId}/briefing",
+    response_model=BriefingResponse,
+)
+def create_satellite_briefing(
+    noradId: int,
+    payload: Optional[BriefingRequest] = Body(default=None),
     db: MissionDatabase = Depends(get_mission_db),
-) -> ImpactAnalysisResponse:
-    """Analyze a conjunction alert from Member 2's Orbital Risk Engine.
-
-    Returns:
-    - Explainable Priority Score (Orbital Risk × Mission Criticality × Earth Impact)
-      with all three dimensions kept distinct from raw collision probability.
-    - Earth-level service disruption & redundancy gap analysis.
-    - Overlapping alternative satellite recommendations with limitations.
-    - Plain-language AI operational advisory (with deterministic fallback).
-    """
-    mission = db.get_by_norad_id(alert.primary_norad_id)
-    target_name = mission.name if mission else (alert.primary_name or f"NORAD {alert.primary_norad_id}")
-    event_id = (
-        alert.event_id
-        or f"ca-{alert.primary_norad_id}-{alert.secondary_norad_id or 'unk'}-{alert.tca_utc}"
-    )
-
-    priority_result = compute_explainable_priority(alert, mission)
-    continuity = run_continuity_analysis(
-        alert.primary_norad_id,
-        db,
-        active_earth_events=alert.active_earth_events,
-        max_results=alert.max_alternatives,
-        conjunction_provenance=alert.data_provenance,
-        target_name_fallback=target_name,
-    )
-
-    advisory = None
-    if alert.include_ai_explanation:
-        advisory = generate_risk_explanation(
-            alert=alert,
-            mission=mission,
-            priority=priority_result,
-            disruptions=continuity.disrupted_services,
-            gaps=continuity.redundancy_gaps,
-            alternatives=continuity.alternatives,
-        )
-
-    return ImpactAnalysisResponse(
-        event_id=event_id,
-        target_norad_id=alert.primary_norad_id,
-        target_name=target_name,
-        is_catalogued_mission=mission is not None,
-        mission_profile=mission,
-        priority_assessment=priority_result,
-        disrupted_services=continuity.disrupted_services,
-        redundancy_gaps=continuity.redundancy_gaps,
-        alternative_satellites=continuity.alternatives,
-        overall_continuity_assessment=continuity.overall_continuity_assessment,
-        ai_advisory=advisory,
-        provenance=DataProvenance(
-            mission_data_provenance=(
-                "verified_public_catalog" if mission is not None else "uncatalogued_fallback"
-            ),
-            conjunction_data_provenance=alert.data_provenance,
-        ),
-    )
+) -> BriefingResponse:
+    """Generate a natural-language operator briefing from structured mission & screening context."""
+    sat = _require_satellite(noradId, db)
+    request_data = payload or BriefingRequest()
+    criticality = compute_criticality(sat)
+    alternatives = find_alternatives(sat, db, max_results=5)
+    return generate_briefing(sat, criticality, alternatives, request_data)

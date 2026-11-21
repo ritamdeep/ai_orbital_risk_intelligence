@@ -1,5 +1,6 @@
-"""ASTRAVIGIL Member 3: AI & Mission Intelligence Backend Module."""
+"""ASTRAVIGIL Member 3: Mission Intelligence Backend Module."""
 
-from .mission_routes import router as mission_router
+from .app import app, create_app
+from .mission_routes import MissionApiError, router as mission_router
 
-__all__ = ["mission_router"]
+__all__ = ["app", "create_app", "mission_router", "MissionApiError"]
