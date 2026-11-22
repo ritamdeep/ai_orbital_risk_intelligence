@@ -5,66 +5,70 @@ import {
   AlternativeSatellite, 
   OperatorAIBriefing 
 } from '../types/intelligence';
-import { fetchFromApi, USE_MOCK_DATA } from './apiClient';
+import { missionApi } from '../api/missionApi';
+import { adaptToMissionProfile, adaptToAIBriefing, normalizeNoradId } from '../api/adapters';
 import { MOCK_MISSION_PROFILES } from './mock/mockSatellites';
 import { MOCK_AI_BRIEFINGS } from './mock/mockConjunctions';
+import { FORCE_MOCK_MODE } from '../api/client';
 
 export const intelligenceService = {
   /**
    * Fetch mission profile and payload instrumentation for a satellite
    */
   async getMissionProfile(noradId: number): Promise<SatelliteMissionProfile | null> {
-    if (USE_MOCK_DATA) {
-      await new Promise(r => setTimeout(r, 100));
-      return MOCK_MISSION_PROFILES[noradId] || null;
+    const normId = normalizeNoradId(noradId);
+    if (FORCE_MOCK_MODE) {
+      return MOCK_MISSION_PROFILES[normId] || MOCK_MISSION_PROFILES[44431] || null;
     }
-    return fetchFromApi<SatelliteMissionProfile>(`/intelligence/mission/${noradId}`);
+    try {
+      const [cap, crit, alts] = await Promise.all([
+        missionApi.getCapabilities(normId),
+        missionApi.getCriticality(normId),
+        missionApi.getAlternatives(normId, 5),
+      ]);
+      return adaptToMissionProfile(cap, crit, alts);
+    } catch {
+      return MOCK_MISSION_PROFILES[normId] || MOCK_MISSION_PROFILES[44431] || null;
+    }
   },
 
   /**
    * Fetch explainable criticality assessment
    */
   async getCriticalityScore(noradId: number): Promise<CriticalityAssessment | null> {
-    if (USE_MOCK_DATA) {
-      const profile = MOCK_MISSION_PROFILES[noradId];
-      return profile ? profile.criticality : null;
-    }
-    return fetchFromApi<CriticalityAssessment>(`/intelligence/criticality/${noradId}`);
+    const profile = await this.getMissionProfile(noradId);
+    return profile ? profile.criticality : null;
   },
 
   /**
    * Fetch downstream Earth service impact analysis
    */
   async getEarthImpact(noradId: number): Promise<EarthServiceImpact | null> {
-    if (USE_MOCK_DATA) {
-      const profile = MOCK_MISSION_PROFILES[noradId];
-      return profile ? profile.earth_impact : null;
-    }
-    return fetchFromApi<EarthServiceImpact>(`/intelligence/earth-impact/${noradId}`);
+    const profile = await this.getMissionProfile(noradId);
+    return profile ? profile.earth_impact : null;
   },
 
   /**
    * Fetch candidate alternative satellites with redundancy gaps
    */
   async getContinuityAlternatives(noradId: number): Promise<AlternativeSatellite[]> {
-    if (USE_MOCK_DATA) {
-      const profile = MOCK_MISSION_PROFILES[noradId];
-      return profile ? profile.continuity_alternatives : [];
-    }
-    return fetchFromApi<AlternativeSatellite[]>(`/intelligence/alternatives/${noradId}`);
+    const profile = await this.getMissionProfile(noradId);
+    return profile ? profile.continuity_alternatives : [];
   },
 
   /**
    * Fetch or trigger AI-generated decision-support briefing for a conjunction event
    */
-  async getAIOperatorBriefing(conjunctionId: string): Promise<OperatorAIBriefing | null> {
-    if (USE_MOCK_DATA) {
-      await new Promise(r => setTimeout(r, 300));
-      return MOCK_AI_BRIEFINGS[conjunctionId] || null;
+  async getAIOperatorBriefing(conjunctionId: string, noradId = 44431): Promise<OperatorAIBriefing | null> {
+    const normId = normalizeNoradId(noradId);
+    if (FORCE_MOCK_MODE) {
+      return MOCK_AI_BRIEFINGS[conjunctionId] || MOCK_AI_BRIEFINGS['CONJ-2026-0042'] || null;
     }
-    return fetchFromApi<OperatorAIBriefing>(`/intelligence/briefing/${conjunctionId}`, {
-      method: 'POST',
-      body: JSON.stringify({ conjunction_id: conjunctionId }),
-    });
+    try {
+      const dto = await missionApi.getBriefing(normId, { conjunctionId });
+      return adaptToAIBriefing(dto);
+    } catch {
+      return MOCK_AI_BRIEFINGS[conjunctionId] || MOCK_AI_BRIEFINGS['CONJ-2026-0042'] || null;
+    }
   }
 };

@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { SatelliteCatalogueItem, SatelliteCategory } from '../types/satelliteIntelligence';
-import { MOCK_SATELLITE_CATALOGUE } from '../services/mock/mockSatelliteIntelligence';
+import { useOrbitalIntelligence } from '../context/OrbitalIntelligenceContext';
+import { isSameSatellite } from '../api/adapters';
 
-export function useSatelliteIntelligence(initialSatelliteId = 'cartosat-3') {
-  const [satellites] = useState<SatelliteCatalogueItem[]>(MOCK_SATELLITE_CATALOGUE);
+export function useSatelliteIntelligence(initialNoradId?: number) {
+  const { satellites, selectedNoradId, selectSatellite, overallFidelity } = useOrbitalIntelligence();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<SatelliteCategory>('All');
-  const [selectedSatelliteId, setSelectedSatelliteId] = useState<string>(initialSatelliteId);
 
   const filteredSatellites = useMemo(() => {
     return satellites.filter((sat) => {
@@ -16,7 +16,10 @@ export function useSatelliteIntelligence(initialSatelliteId = 'cartosat-3') {
         sat.category === selectedCategory ||
         (selectedCategory === 'Earth Observation' && sat.category === 'Earth Observation') ||
         (selectedCategory === 'Disaster Monitoring' && sat.category === 'Disaster Monitoring') ||
-        (selectedCategory === 'Weather' && sat.category === 'Weather');
+        (selectedCategory === 'Weather' && sat.category === 'Weather') ||
+        (selectedCategory === 'Communication' && sat.category === 'Communication') ||
+        (selectedCategory === 'Navigation' && sat.category === 'Navigation') ||
+        (selectedCategory === 'Scientific / Student' && sat.category === 'Scientific / Student');
 
       // Search filter
       const query = searchQuery.trim().toLowerCase();
@@ -29,14 +32,20 @@ export function useSatelliteIntelligence(initialSatelliteId = 'cartosat-3') {
     });
   }, [satellites, searchQuery, selectedCategory]);
 
+  const activeNoradId = initialNoradId || selectedNoradId;
+
   const selectedSatellite = useMemo(() => {
     return (
-      satellites.find((s) => s.id === selectedSatelliteId) ||
-      satellites.find((s) => s.noradId === Number(selectedSatelliteId)) ||
+      satellites.find((s) => isSameSatellite(s.noradId, activeNoradId)) ||
       filteredSatellites[0] ||
-      satellites[0]
+      satellites[0] ||
+      null
     );
-  }, [satellites, selectedSatelliteId, filteredSatellites]);
+  }, [satellites, activeNoradId, filteredSatellites]);
+
+  const handleSelectSatellite = (sat: SatelliteCatalogueItem) => {
+    selectSatellite(sat.noradId);
+  };
 
   return {
     satellites,
@@ -46,6 +55,11 @@ export function useSatelliteIntelligence(initialSatelliteId = 'cartosat-3') {
     setSearchQuery,
     selectedCategory,
     setSelectedCategory,
-    setSelectedSatelliteId,
+    setSelectedSatelliteId: (idOrNorad: string | number) => {
+      const num = typeof idOrNorad === 'number' ? idOrNorad : parseInt(idOrNorad.replace('sat-', ''), 10);
+      if (!isNaN(num)) selectSatellite(num);
+    },
+    onSelectSatellite: handleSelectSatellite,
+    overallFidelity,
   };
 }

@@ -4,9 +4,11 @@ import {
   Search, 
   Bell, 
   Settings, 
-  Database 
+  Database,
+  Radio,
+  Layers
 } from 'lucide-react';
-import { USE_MOCK_DATA } from '../../services/apiClient';
+import { useOrbitalIntelligence, SystemDataFidelity } from '../../context/OrbitalIntelligenceContext';
 
 export type NavPage = 'overview' | 'satellites' | 'risk' | 'impact' | 'alerts';
 
@@ -17,6 +19,8 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentPage, onSelectPage, activeAlertCount }) => {
+  const { overallFidelity } = useOrbitalIntelligence();
+
   const navItems: { id: NavPage; label: string; badge?: number }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'satellites', label: 'Satellite Intelligence' },
@@ -27,9 +31,25 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onSelectPage, activ
 
   return (
     <header className="sticky top-0 z-50 bg-[#030712]/70 backdrop-blur-xl border-b border-white/5 transition-all">
-      {/* Top Simulated Data Pill in Top-Right Corner */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2.5 pb-1 flex justify-end">
-        {USE_MOCK_DATA && (
+      {/* Top Status / Telemetry Fidelity Pill in Top-Right Corner */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-1 flex justify-end">
+        {overallFidelity === 'Live' && (
+          <div className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <Radio className="w-3 h-3 text-emerald-400" />
+            <span>LIVE TELEMETRY (REAL)</span>
+          </div>
+        )}
+
+        {overallFidelity === 'Partial' && (
+          <div className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-[11px] font-mono font-medium bg-amber-950/60 border border-amber-500/50 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]">
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <Layers className="w-3 h-3 text-amber-400" />
+            <span>PARTIAL TELEMETRY (HYBRID)</span>
+          </div>
+        )}
+
+        {overallFidelity === 'Mock' && (
           <div className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-[11px] font-mono font-medium bg-slate-900/80 border border-slate-700/60 text-slate-300 shadow-sm">
             <Database className="w-3 h-3 text-cyan-400" />
             <span>SIMULATED DATA (MOCK)</span>
