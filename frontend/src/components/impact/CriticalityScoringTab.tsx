@@ -9,7 +9,6 @@ interface CriticalityScoringTabProps {
 export const CriticalityScoringTab: React.FC<CriticalityScoringTabProps> = ({ criticality }) => {
   const [animated, setAnimated] = useState(false);
 
-  // Trigger smooth progress bar animation on mount or satellite change
   useEffect(() => {
     setAnimated(false);
     const timer = setTimeout(() => {
@@ -46,59 +45,50 @@ export const CriticalityScoringTab: React.FC<CriticalityScoringTabProps> = ({ cr
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6">
       <div>
-        <h3 className="text-base font-bold text-white tracking-wide">
-          Explainable Criticality Assessment
-        </h3>
-        <p className="text-xs text-slate-400 mt-0.5">
+        <h3 className="type-card-title text-white">Explainable Criticality Assessment</h3>
+        <p className="text-sm text-[#b4c6dc] mt-1">
           Evaluated against human life safety, disaster response dependencies, and national infrastructure value.
         </p>
       </div>
 
-      {/* 2x2 Factor Cards Grid */}
+      {/* 2x2 Factor Cards Grid — Single Cohesive Cyan-to-Teal Bar Color Family */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {factors.map((factor) => (
           <div
             key={factor.id}
-            className="p-4 sm:p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 shadow-lg space-y-2.5"
+            className="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-cyan-400/30 transition-all duration-200 space-y-3"
           >
-            <div className="flex justify-between items-baseline text-xs font-semibold">
-              <span className="text-slate-200">{factor.label}</span>
-              <span className="font-mono text-cyan-300 font-bold text-sm tabular-nums">
+            <div className="flex justify-between items-baseline gap-2">
+              <span className="text-sm font-sans font-semibold text-slate-100">
+                {factor.label}
+              </span>
+              <span className="font-data text-cyan-300 font-semibold text-base text-glow-cyan">
                 {factor.value}%
               </span>
             </div>
 
-            {/* Consistent Cyan-to-Teal Progress Bar for all 4 factors */}
-            <div className="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
+            <div className="w-full bg-white/[0.08] h-2.5 rounded-full overflow-hidden">
               <div
-                className="bg-gradient-to-r from-cyan-500 to-teal-400 h-full rounded-full shadow-[0_0_10px_rgba(6,182,212,0.4)] transition-all duration-700 ease-out"
-                style={{
-                  width: animated ? `${factor.value}%` : '0%',
-                }}
+                className="progress-glow-fill h-full rounded-full transition-all duration-700 ease-out"
+                style={{ width: animated ? `${factor.value}%` : '0%' }}
               />
             </div>
 
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              {factor.description}
-            </p>
+            <p className="text-xs text-[#b4c6dc] leading-relaxed">{factor.description}</p>
           </div>
         ))}
       </div>
 
       {/* Deterministic Decision Rationale Box */}
-      <div className="bg-slate-950/60 rounded-2xl p-5 border border-slate-800/80 shadow-lg space-y-3.5">
-        <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-wider font-mono">
-          Deterministic Decision Rationale
-        </h4>
-        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-          {criticality.rationale}
-        </p>
+      <div className="bg-white/[0.03] rounded-2xl p-5 border border-white/[0.08] space-y-3.5">
+        <h4 className="type-label text-cyan-300">Deterministic Decision Rationale</h4>
+        <p className="type-body text-slate-200">{criticality.rationale}</p>
 
-        <div className="space-y-2 pt-1 border-t border-slate-800/80">
+        <div className="space-y-2.5 pt-2 border-t border-white/[0.08]">
           {criticality.scoring_factors.map((factor, idx) => (
-            <div key={idx} className="flex items-start space-x-2.5 text-xs text-slate-300">
+            <div key={idx} className="flex items-start space-x-2.5 text-sm text-slate-200">
               <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
               <span className="leading-relaxed">{factor}</span>
             </div>

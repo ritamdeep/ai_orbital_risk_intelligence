@@ -2,18 +2,17 @@ import React, { useState } from 'react';
 import { SpaceObjectSummary, ConjunctionEvent } from '../../types/orbital';
 import { Globe3DView } from '../monitoring/Globe3DView';
 import { useOrbitalIntelligence } from '../../context/OrbitalIntelligenceContext';
-import { formatEnum } from '../../utils/textFormatters';
-import { 
-  Orbit, 
-  Satellite, 
-  AlertTriangle, 
-  ShieldAlert, 
-  X, 
-  Sparkles, 
-  HelpCircle, 
-  GripHorizontal, 
+import { GlassCard } from '../common/GlassCard';
+import {
+  Orbit,
+  Satellite,
+  AlertTriangle,
+  ShieldAlert,
+  X,
+  Sparkles,
+  HelpCircle,
+  GripHorizontal,
   RotateCcw,
-  ArrowRight
 } from 'lucide-react';
 import { NavPage } from '../layout/Navbar';
 
@@ -48,11 +47,14 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   const { selectedMissionProfile, selectedSatellite } = useOrbitalIntelligence();
 
   // Default to CARTOSAT-3 (44431) or current selectedObject or first object
-  const activeSatellites = objects.filter(o => o.object_type === 'PAYLOAD');
-  const cataloguedDebris = objects.filter(o => o.object_type === 'DEBRIS' || o.object_type === 'ROCKET_BODY');
-  const urgentEvents = conjunctions.filter(c => c.miss_distance_km < 5.0);
+  const activeSatellites = objects.filter((o) => o.object_type === 'PAYLOAD');
+  const cataloguedDebris = objects.filter(
+    (o) => o.object_type === 'DEBRIS' || o.object_type === 'ROCKET_BODY'
+  );
+  const urgentEvents = conjunctions.filter((c) => c.miss_distance_km < 5.0);
 
-  const currentSat = selectedObject || objects.find(o => o.norad_id === 44431) || objects[0];
+  const currentSat =
+    selectedObject || objects.find((o) => o.norad_id === 44431) || objects[0];
 
   // Format purpose
   const getPurpose = (sat: SpaceObjectSummary | null) => {
@@ -72,245 +74,245 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   };
 
   return (
-    <div className="relative w-full min-h-[calc(100vh-140px)] flex flex-col justify-between overflow-hidden select-none pb-2">
-      {/* 3D Globe Canvas (Hero in Center) */}
-      <div className="w-full flex-1 flex items-center justify-center min-h-[580px] lg:min-h-[660px]">
-        <Globe3DView
-          objects={objects}
-          conjunctions={conjunctions}
-          selectedObject={currentSat}
-          onSelectObject={handleGlobeSelect}
-          showOrbits={showOrbits}
-          showDebris={showDebris}
-          autoRotate={autoRotate}
-          heightClassName="h-[580px] lg:h-[680px]"
-        />
-      </div>
+    <div className="relative w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex-1 flex flex-col justify-between gap-4 select-none">
+      {/* MAIN HERO STAGE: Left KPIs | Centered Full-Viewport Globe | Right Mission Panels */}
+      <div className="relative flex-1 grid grid-cols-1 lg:grid-cols-12 items-center gap-5 min-h-[500px] lg:min-h-[580px]">
+        {/* LEFT COLUMN: 4 Real Glass KPI Cards */}
+        <div className="order-2 lg:order-1 lg:col-span-3 space-y-3.5 z-20">
+          {/* KPI 1 */}
+          <GlassCard interactive glow="cyan" className="p-5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="type-label">Tracked Catalogued Objects</div>
+              <div className="type-kpi text-white text-glow-cyan mt-1.5">28,410+</div>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-cyan-500/15 border border-cyan-400/35 flex items-center justify-center text-cyan-300 shrink-0 shadow-glow-cyan">
+              <Orbit className="w-5 h-5" />
+            </div>
+          </GlassCard>
 
-      {/* DESKTOP OVERLAY LAYOUT / RESPONSIVE CONTAINER */}
-      <div className="w-full pointer-events-none lg:absolute lg:inset-0 flex flex-col justify-between p-4 sm:p-6 lg:p-8">
-        {/* Top / Main Floating Row */}
-        <div className="flex flex-col lg:flex-row justify-between items-start gap-4 w-full">
-          {/* LEFT COLUMN: 4 Glass KPI Cards */}
-          <div className="w-full lg:w-72 space-y-3 pointer-events-auto shrink-0 z-20">
-            {/* KPI 1 */}
-            <div className="bg-[#0b1325]/50 hover:bg-[#0b1325]/70 backdrop-blur-xl border border-slate-700/40 rounded-2xl p-4.5 shadow-2xl transition-all flex items-center justify-between">
-              <div>
-                <div className="text-xs text-slate-400 font-medium tracking-wide">
-                  Tracked Catalogued Objects
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-1">
-                  28,410+
-                </div>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-300 shrink-0">
-                <Orbit className="w-5 h-5" />
+          {/* KPI 2 */}
+          <GlassCard interactive glow="cyan" className="p-5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="type-label">Monitored Active Satellites</div>
+              <div className="type-kpi text-cyan-300 text-glow-cyan mt-1.5">
+                {activeSatellites.length || 5}
               </div>
             </div>
+            <div className="w-12 h-12 rounded-full bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shrink-0 shadow-glow-cyan">
+              <Satellite className="w-5 h-5" />
+            </div>
+          </GlassCard>
 
-            {/* KPI 2 */}
-            <div className="bg-[#0b1325]/50 hover:bg-[#0b1325]/70 backdrop-blur-xl border border-slate-700/40 rounded-2xl p-4.5 shadow-2xl transition-all flex items-center justify-between">
-              <div>
-                <div className="text-xs text-slate-400 font-medium tracking-wide">
-                  Monitored Active Satellites
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-1">
-                  {activeSatellites.length || 5}
-                </div>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-                <Satellite className="w-5 h-5" />
+          {/* KPI 3 */}
+          <GlassCard interactive glow="amber" className="p-5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="type-label">Tracked Catalogued Debris</div>
+              <div className="type-kpi text-amber-300 text-glow-amber mt-1.5">
+                {cataloguedDebris.length || 3}
               </div>
             </div>
-
-            {/* KPI 3 */}
-            <div className="bg-[#0b1325]/50 hover:bg-[#0b1325]/70 backdrop-blur-xl border border-slate-700/40 rounded-2xl p-4.5 shadow-2xl transition-all flex items-center justify-between">
-              <div>
-                <div className="text-xs text-slate-400 font-medium tracking-wide">
-                  Tracked Catalogued Debris
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold font-mono text-white mt-1">
-                  {cataloguedDebris.length || 3}
-                </div>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-amber-950/60 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
+            <div className="w-12 h-12 rounded-full bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0 shadow-glow-amber">
+              <AlertTriangle className="w-5 h-5" />
             </div>
+          </GlassCard>
 
-            {/* KPI 4 */}
-            <div className="bg-[#0b1325]/50 hover:bg-[#0b1325]/70 backdrop-blur-xl border border-slate-700/40 rounded-2xl p-4.5 shadow-2xl transition-all flex items-center justify-between">
-              <div>
-                <div className="text-xs text-slate-400 font-medium tracking-wide">
-                  Flagged Close Approaches (&lt;5 km)
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold font-mono text-rose-500 mt-1">
-                  {urgentEvents.length || 2}
-                </div>
-                <div className="text-[11px] text-rose-400/90 font-medium mt-0.5">
-                  within 72h window
-                </div>
+          {/* KPI 4 (Critical Soft Pulse) */}
+          <GlassCard
+            interactive
+            glow="red"
+            pulseCritical
+            className="p-5 flex items-center justify-between gap-3"
+          >
+            <div className="min-w-0">
+              <div className="type-label">Flagged Close Approaches (&lt;5 km)</div>
+              <div className="type-kpi text-rose-400 text-glow-red mt-1.5">
+                {urgentEvents.length || 2}
               </div>
-              <div className="w-11 h-11 rounded-xl bg-rose-950/60 border border-rose-500/40 flex items-center justify-center text-rose-500 shrink-0 shadow-[0_0_15px_rgba(244,63,94,0.2)]">
-                <ShieldAlert className="w-5 h-5" />
-              </div>
+              <div className="text-xs text-rose-300/90 font-medium mt-1">within 72h window</div>
             </div>
-          </div>
+            <div className="w-12 h-12 rounded-full bg-rose-500/15 border border-rose-400/45 flex items-center justify-center text-rose-400 shrink-0 shadow-glow-red">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+          </GlassCard>
+        </div>
 
-          {/* RIGHT COLUMN: Selected Satellite Panel & Satellite Service Continuity */}
-          <div className="w-full lg:w-80 space-y-4 pointer-events-auto shrink-0 z-20">
-            {/* Selected Satellite Glass Card */}
-            {isPanelOpen && currentSat && (
-              <div className="bg-[#0b1325]/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-5 shadow-2xl transition-all space-y-4 animate-in fade-in duration-200">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 tracking-wider">
-                    Selected Satellite
-                  </span>
-                  <button
-                    onClick={() => setIsPanelOpen(false)}
-                    aria-label="Close panel"
-                    className="w-6 h-6 rounded-lg bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition-all"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+        {/* CENTER HERO: Fully Centered, Unclipped 3D Globe */}
+        <div className="order-1 lg:order-2 lg:col-span-6 flex items-center justify-center relative z-10">
+          <Globe3DView
+            objects={objects}
+            conjunctions={conjunctions}
+            selectedObject={currentSat}
+            onSelectObject={handleGlobeSelect}
+            showOrbits={showOrbits}
+            showDebris={showDebris}
+            autoRotate={autoRotate}
+            heightClassName="h-[420px] sm:h-[480px] lg:h-[540px] xl:h-[600px]"
+          />
+        </div>
+
+        {/* RIGHT COLUMN: Selected Satellite Panel & Satellite Service Continuity */}
+        <div className="order-3 lg:col-span-3 space-y-4 z-20">
+          {/* Selected Satellite Glass Card (Animated Gradient Border + Strong Glow) */}
+          {isPanelOpen && currentSat && (
+            <GlassCard selected glow="cyan" className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="type-label">Selected Satellite</span>
+                <button
+                  onClick={() => setIsPanelOpen(false)}
+                  aria-label="Close panel"
+                  className="w-7 h-7 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-[#b4c6dc] hover:text-white hover:border-cyan-400/40 transition-all"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div>
+                <h3 className="font-display text-2xl font-bold text-white tracking-[-0.02em]">
+                  {currentSat.name}
+                </h3>
+              </div>
+
+              {/* 2x2 Telemetry Grid */}
+              <div className="grid grid-cols-2 gap-y-4 gap-x-4 border-t border-white/10 pt-4">
+                <div>
+                  <div className="type-label">NORAD ID</div>
+                  <div className="text-base font-semibold font-data text-cyan-200 mt-1">
+                    {currentSat.norad_id}
+                  </div>
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-bold font-mono text-white tracking-wide">
-                    {currentSat.name}
-                  </h3>
+                  <div className="type-label">altitude</div>
+                  <div className="text-base font-semibold font-data text-white mt-1">
+                    {currentSat.current_position.altitude_km.toFixed(0)} km
+                  </div>
                 </div>
 
-                {/* 2x2 Telemetry Grid */}
-                <div className="grid grid-cols-2 gap-y-3.5 gap-x-4 border-t border-slate-800/80 pt-3.5 font-mono text-xs">
-                  <div>
-                    <div className="text-[11px] text-slate-400">NORAD ID</div>
-                    <div className="text-base font-bold text-white mt-0.5">
-                      {currentSat.norad_id}
-                    </div>
+                <div>
+                  <div className="type-label">orbit</div>
+                  <div className="text-base font-semibold font-data text-white mt-1">
+                    {currentSat.orbit_regime}
                   </div>
+                </div>
 
-                  <div>
-                    <div className="text-[11px] text-slate-400">altitude</div>
-                    <div className="text-base font-bold text-white mt-0.5">
-                      {currentSat.current_position.altitude_km.toFixed(0)} km
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-[11px] text-slate-400">orbit</div>
-                    <div className="text-base font-bold text-white mt-0.5">
-                      {currentSat.orbit_regime}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-[11px] text-slate-400">purpose</div>
-                    <div className="text-sm font-semibold text-white mt-0.5 font-sans leading-tight">
-                      {getPurpose(currentSat)}
-                    </div>
+                <div>
+                  <div className="type-label">purpose</div>
+                  <div className="text-sm font-medium text-slate-100 mt-1 font-sans leading-snug">
+                    {getPurpose(currentSat)}
                   </div>
                 </div>
               </div>
-            )}
+            </GlassCard>
+          )}
 
-            {/* Satellite Service Continuity Card (Bottom Right) */}
-            <div className="bg-[#0b1325]/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-5 shadow-2xl transition-all relative overflow-hidden space-y-2">
-              <Sparkles className="absolute right-3 top-8 w-24 h-24 text-cyan-400/5 pointer-events-none" />
+          {/* Satellite Service Continuity Card (Violet Mission Glow) */}
+          <GlassCard interactive glow="violet" className="p-5 relative overflow-hidden space-y-3">
+            <Sparkles className="absolute right-3 top-6 w-24 h-24 text-violet-400/10 pointer-events-none" />
 
-              <h4 className="text-base font-bold text-white tracking-wide">
-                Satellite Service Continuity
-              </h4>
-              <p className="text-xs text-slate-300 leading-relaxed max-w-xs">
-                Evaluate alternative satellites and redundancy gaps if primary payloads degrade.
-              </p>
+            <h4 className="type-card-title text-white">Satellite Service Continuity</h4>
+            <p className="text-sm text-[#b4c6dc] leading-relaxed">
+              Evaluate alternative satellites and redundancy gaps if primary payloads degrade.
+            </p>
 
-              <div className="pt-2">
-                <button
-                  onClick={() => onNavigate('impact')}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-300 to-cyan-400 text-slate-950 font-bold text-xs tracking-wider shadow-[0_0_20px_rgba(34,211,238,0.5)] hover:shadow-[0_0_28px_rgba(34,211,238,0.7)] transition-all flex items-center justify-center space-x-1.5"
-                >
-                  <span>Explore Continuity</span>
-                </button>
-              </div>
+            <div className="pt-1">
+              <button
+                onClick={() => onNavigate('impact')}
+                className="btn-primary-glow w-full py-2.5 px-4 rounded-2xl text-sm flex items-center justify-center space-x-1.5"
+              >
+                <span>Explore Continuity</span>
+              </button>
             </div>
-          </div>
+          </GlassCard>
         </div>
+      </div>
 
-        {/* BOTTOM CENTER: Floating AI Search Bar & Toggle Pills & Footer Note */}
-        <div className="w-full flex flex-col items-center space-y-3 pointer-events-auto z-30 pt-6 lg:pt-0">
-          {/* Floating AI Search Bar */}
-          <div className="w-full max-w-md bg-[#0c1322]/80 backdrop-blur-xl border border-slate-700/60 rounded-full px-4 py-2.5 shadow-2xl flex items-center space-x-3 transition-all focus-within:border-cyan-500/60 focus-within:shadow-[0_0_20px_rgba(6,182,212,0.25)]">
-            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="Ask a question about space assets..."
-              value={searchPrompt}
-              onChange={(e) => setSearchPrompt(e.target.value)}
-              className="bg-transparent text-xs text-white placeholder-slate-400 focus:outline-none flex-1 font-sans"
+      {/* BOTTOM CENTER CONTROLS: Cleanly Below Globe (Zero Overlap) */}
+      <div className="w-full flex flex-col items-center space-y-3 z-30 pt-1 pb-1">
+        {/* Floating AI Search Bar */}
+        <GlassCard
+          variant="pill"
+          glow="violet"
+          className="w-full max-w-lg px-4 py-2.5 flex items-center space-x-3 focus-within:border-cyan-400/50 focus-within:shadow-glow-cyan"
+        >
+          <Sparkles className="w-4 h-4 text-violet-400 shrink-0" />
+          <input
+            type="text"
+            placeholder="Ask a question about space assets..."
+            value={searchPrompt}
+            onChange={(e) => setSearchPrompt(e.target.value)}
+            className="bg-transparent text-sm text-white placeholder-[#94adc9] focus:outline-none flex-1 font-sans"
+          />
+          <button
+            type="button"
+            aria-label="Help"
+            className="text-[#94adc9] hover:text-white transition-colors"
+          >
+            <HelpCircle className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Actions"
+            className="text-[#94adc9] hover:text-white transition-colors"
+          >
+            <GripHorizontal className="w-4 h-4" />
+          </button>
+        </GlassCard>
+
+        {/* Floating Toggle Pills */}
+        <GlassCard variant="pill" className="p-1.5 flex items-center space-x-1.5">
+          {/* Orbits Toggle */}
+          <button
+            onClick={() => setShowOrbits(!showOrbits)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-sans font-medium transition-all duration-200 flex items-center space-x-1.5 ${
+              showOrbits
+                ? 'border border-cyan-400/50 bg-cyan-500/15 text-cyan-200 shadow-glow-cyan'
+                : 'text-[#94adc9] hover:text-white border border-transparent hover:bg-white/[0.05]'
+            }`}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                showOrbits ? 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]' : 'bg-slate-600'
+              }`}
             />
-            <button 
-              type="button" 
-              aria-label="Help"
-              className="text-slate-400 hover:text-slate-200 transition-colors"
-            >
-              <HelpCircle className="w-4 h-4" />
-            </button>
-            <button 
-              type="button" 
-              aria-label="Actions"
-              className="text-slate-400 hover:text-slate-200 transition-colors"
-            >
-              <GripHorizontal className="w-4 h-4" />
-            </button>
-          </div>
+            <span>{showOrbits ? 'Orbits: ON' : 'Orbits: OFF'}</span>
+          </button>
 
-          {/* Floating Toggle Pills */}
-          <div className="bg-[#0b1325]/90 backdrop-blur-xl border border-slate-800/90 rounded-full p-1 shadow-2xl flex items-center space-x-1 sm:space-x-1.5">
-            {/* Orbits Toggle */}
-            <button
-              onClick={() => setShowOrbits(!showOrbits)}
-              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center space-x-1.5 ${
-                showOrbits
-                  ? 'border border-cyan-400/50 bg-cyan-950/40 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
-                  : 'text-slate-400 hover:text-white border border-transparent'
+          {/* Debris Toggle */}
+          <button
+            onClick={() => setShowDebris(!showDebris)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-sans font-medium transition-all duration-200 flex items-center space-x-1.5 ${
+              showDebris
+                ? 'border border-amber-400/50 bg-amber-500/15 text-amber-200 shadow-glow-amber'
+                : 'text-[#94adc9] hover:text-white border border-transparent hover:bg-white/[0.05]'
+            }`}
+          >
+            <AlertTriangle
+              className={`w-3.5 h-3.5 ${showDebris ? 'text-amber-400' : 'text-slate-500'}`}
+            />
+            <span>{showDebris ? 'Debris: Visible' : 'Debris: Hidden'}</span>
+          </button>
+
+          {/* Auto-Rotate Toggle */}
+          <button
+            onClick={() => setAutoRotate(!autoRotate)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-sans font-medium transition-all duration-200 flex items-center space-x-1.5 ${
+              autoRotate
+                ? 'text-slate-100 border border-white/15 bg-white/[0.08]'
+                : 'text-[#94adc9] hover:text-white border border-transparent hover:bg-white/[0.05]'
+            }`}
+          >
+            <RotateCcw
+              className={`w-3.5 h-3.5 ${
+                autoRotate ? 'animate-spin-slow text-cyan-400' : 'text-slate-500'
               }`}
-            >
-              <span className={`w-2 h-2 rounded-full ${showOrbits ? 'bg-cyan-400 shadow-[0_0_6px_#22d3ee]' : 'bg-slate-600'}`}></span>
-              <span>{showOrbits ? 'Orbits: ON' : 'Orbits: OFF'}</span>
-            </button>
+            />
+            <span>Auto-Rotate</span>
+          </button>
+        </GlassCard>
 
-            {/* Debris Toggle */}
-            <button
-              onClick={() => setShowDebris(!showDebris)}
-              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center space-x-1.5 ${
-                showDebris
-                  ? 'border border-amber-500/40 bg-amber-950/40 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
-                  : 'text-slate-400 hover:text-white border border-transparent'
-              }`}
-            >
-              <AlertTriangle className={`w-3.5 h-3.5 ${showDebris ? 'text-amber-400' : 'text-slate-500'}`} />
-              <span>{showDebris ? 'Debris: Visible' : 'Debris: Hidden'}</span>
-            </button>
-
-            {/* Auto-Rotate Toggle */}
-            <button
-              onClick={() => setAutoRotate(!autoRotate)}
-              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center space-x-1.5 ${
-                autoRotate
-                  ? 'text-slate-200 border border-slate-700/60 bg-slate-800/40'
-                  : 'text-slate-500 hover:text-white border border-transparent'
-              }`}
-            >
-              <RotateCcw className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin-slow text-cyan-400' : 'text-slate-500'}`} />
-              <span>Auto-Rotate</span>
-            </button>
-          </div>
-
-          {/* Footer Line */}
-          <div className="text-[11px] text-slate-400 font-mono tracking-wide text-center pt-1">
-            Preliminary screening, not a validated conjunction assessment.
-          </div>
+        {/* Footer Line */}
+        <div className="text-xs text-[#94adc9] font-sans text-center">
+          Preliminary screening, not a validated conjunction assessment.
         </div>
       </div>
     </div>

@@ -10,27 +10,31 @@ interface StatusDropdownProps {
 
 const STATUS_CONFIG: Record<
   InvestigationStatus,
-  { label: string; dotColor: string; textColor: string }
+  { label: string; dotColor: string; textColor: string; pillGlow: string }
 > = {
   UNREVIEWED: {
     label: 'Unreviewed',
-    dotColor: 'bg-slate-400',
-    textColor: 'text-slate-300',
+    dotColor: 'bg-slate-300',
+    textColor: 'text-slate-200',
+    pillGlow: 'border-white/15 hover:border-cyan-400/40',
   },
   UNDER_EVALUATION: {
     label: 'Under Evaluation',
-    dotColor: 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.7)]',
-    textColor: 'text-cyan-300',
+    dotColor: 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]',
+    textColor: 'text-amber-200',
+    pillGlow: 'border-amber-400/40 bg-amber-500/10 shadow-glow-amber',
   },
   MONITORING: {
     label: 'Monitoring',
-    dotColor: 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.7)]',
-    textColor: 'text-blue-300',
+    dotColor: 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]',
+    textColor: 'text-cyan-200',
+    pillGlow: 'border-cyan-400/40 bg-cyan-500/10 shadow-glow-cyan',
   },
   DISMISSED: {
     label: 'Dismissed',
-    dotColor: 'bg-slate-600',
-    textColor: 'text-slate-500',
+    dotColor: 'bg-slate-500',
+    textColor: 'text-[#94adc9]',
+    pillGlow: 'border-white/10',
   },
 };
 
@@ -44,7 +48,6 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
 
   const current = STATUS_CONFIG[status] || STATUS_CONFIG.UNREVIEWED;
 
-  // Click outside listener
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -71,7 +74,11 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
   ];
 
   return (
-    <div className="relative inline-block text-left" ref={containerRef} onKeyDown={handleKeyDown}>
+    <div
+      className="relative inline-block text-left"
+      ref={containerRef}
+      onKeyDown={handleKeyDown}
+    >
       <button
         type="button"
         disabled={disabled}
@@ -79,12 +86,12 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={`Current status: ${current.label}. Click to change status.`}
-        className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-700/80 hover:border-cyan-500/60 focus:border-cyan-400 text-xs font-mono transition-all shadow-sm focus:outline-none focus:ring-1 focus:ring-cyan-400"
+        className={`flex items-center space-x-2 px-3.5 py-2 rounded-2xl bg-white/[0.05] border text-xs font-sans font-medium transition-all duration-200 ${current.pillGlow}`}
       >
         <span className={`w-2 h-2 rounded-full ${current.dotColor} shrink-0`} />
-        <span className={`font-medium ${current.textColor}`}>{current.label}</span>
+        <span className={current.textColor}>{current.label}</span>
         <ChevronDown
-          className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+          className={`w-3.5 h-3.5 text-[#94adc9] transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -93,7 +100,7 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
       {isOpen && (
         <div
           role="listbox"
-          className="absolute right-0 mt-1.5 w-48 rounded-xl bg-slate-950/95 backdrop-blur-xl border border-cyan-500/30 shadow-[0_12px_36px_rgba(0,0,0,0.8)] z-50 py-1 focus:outline-none animate-in fade-in zoom-in-95 duration-100"
+          className="glass-surface-chip absolute right-0 mt-2 w-48 z-50 py-1.5 bg-[#081022]/95"
         >
           {statuses.map((s) => {
             const item = STATUS_CONFIG[s];
@@ -107,10 +114,10 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
                   onChange(s);
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-mono transition-colors ${
+                className={`w-full flex items-center justify-between px-3.5 py-2 text-xs font-sans transition-colors ${
                   isSelected
-                    ? 'bg-cyan-950/60 text-cyan-300 font-bold'
-                    : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+                    ? 'bg-cyan-500/15 text-cyan-200 font-semibold'
+                    : 'text-slate-200 hover:bg-white/[0.06] hover:text-white'
                 }`}
               >
                 <div className="flex items-center space-x-2">
