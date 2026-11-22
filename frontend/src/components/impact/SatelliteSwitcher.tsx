@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Satellite, ChevronDown, Check } from 'lucide-react';
-import { MOCK_SATELLITE_CATALOGUE } from '../../services/mock/mockSatelliteIntelligence';
+import { useOrbitalIntelligence } from '../../context/OrbitalIntelligenceContext';
 
 interface SatelliteOption {
   noradId: number;
@@ -22,10 +22,12 @@ export const SatelliteSwitcher: React.FC<SatelliteSwitcherProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const { satellites: contextSatellites } = useOrbitalIntelligence();
+
   // Fallback to catalogue if availableSatellites is not passed
   const satellites: SatelliteOption[] = (availableSatellites && availableSatellites.length > 0)
     ? availableSatellites
-    : MOCK_SATELLITE_CATALOGUE.map(s => ({
+    : contextSatellites.map(s => ({
         noradId: s.noradId,
         name: s.name,
         category: s.categoryChipLabel || s.category,

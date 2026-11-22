@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ConjunctionEvent } from '../../types/orbital';
-import { MOCK_MISSION_PROFILES } from '../../services/mock/mockSatellites';
+import { useOrbitalIntelligence } from '../../context/OrbitalIntelligenceContext';
+import { isSameSatellite } from '../../api/adapters';
 import { formatDistance, formatVelocity, formatUTC } from '../../utils/formatters';
 import { MISS_DISTANCE_THRESHOLD_KM, CRITICALITY_THRESHOLD, MAX_MISS_DISTANCE_KM, MAX_CRITICALITY_SCORE } from '../../constants/screeningConfig';
 import { Info } from 'lucide-react';
@@ -16,6 +17,7 @@ export const RiskMatrix2D: React.FC<RiskMatrix2DProps> = ({
   selectedConjunction,
   onSelectConjunction,
 }) => {
+  const { satellites } = useOrbitalIntelligence();
   const [hoveredEvent, setHoveredEvent] = useState<ConjunctionEvent | null>(null);
 
   // SVG dimensions & padding for optimal resolution and proportions
@@ -377,8 +379,8 @@ export const RiskMatrix2D: React.FC<RiskMatrix2DProps> = ({
 
           {/* Conjunction Data Points */}
           {conjunctions.map((event, index) => {
-            const profile = MOCK_MISSION_PROFILES[event.primary_object.norad_id];
-            const critScore = profile ? profile.criticality.score : 50;
+            const matchedSat = satellites.find(s => isSameSatellite(s.noradId, event.primary_object.norad_id));
+            const critScore = matchedSat ? matchedSat.criticality.score : 50;
             const cx = getX(event.miss_distance_km);
             const cy = getY(critScore);
             const isSelected = selectedConjunction?.conjunction_id === event.conjunction_id;
@@ -510,7 +512,7 @@ export const RiskMatrix2D: React.FC<RiskMatrix2DProps> = ({
               <div className="flex justify-between">
                 <span className="text-slate-400">Mission criticality:</span>
                 <span className="text-rose-400 font-bold">
-                  {MOCK_MISSION_PROFILES[hoveredEvent.primary_object.norad_id]?.criticality.score || 50} / 100
+                  {satellites.find(s => isSameSatellite(s.noradId, hoveredEvent.primary_object.norad_id))?.criticality.score || 50} / 100
                 </span>
               </div>
               <div className="flex justify-between">

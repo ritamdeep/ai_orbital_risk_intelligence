@@ -8,7 +8,7 @@ import { EarthServiceImpactTab } from './EarthServiceImpactTab';
 import { ContinuityRedundancyTab } from './ContinuityRedundancyTab';
 import { AIBriefingTab } from './AIBriefingTab';
 import { formatOperator, formatEnum } from '../../utils/textFormatters';
-import { USE_MOCK_DATA } from '../../services/apiClient';
+import { useOrbitalIntelligence } from '../../context/OrbitalIntelligenceContext';
 import { Sparkles, Info, Layers } from 'lucide-react';
 
 export type ImpactSubTab = 'criticality' | 'earth_impact' | 'continuity' | 'ai_brief';
@@ -29,6 +29,7 @@ export const MissionImpactView: React.FC<MissionImpactViewProps> = ({
   onSelectSatellite,
   onSelectAlternative,
 }) => {
+  const { overallFidelity } = useOrbitalIntelligence();
   const [activeTab, setActiveTab] = useState<ImpactSubTab>('criticality');
 
   // Read ?satellite query parameter on mount and sync if different
@@ -117,7 +118,7 @@ export const MissionImpactView: React.FC<MissionImpactViewProps> = ({
             {missionProfile.primary_mission_purpose}
           </p>
 
-          {USE_MOCK_DATA && (
+          {overallFidelity !== 'Live' && (
             <div className="pt-1">
               <span className="text-[10px] text-slate-400 font-mono italic">
                 Mock data. Illustrative values.

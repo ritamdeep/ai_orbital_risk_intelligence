@@ -1,6 +1,7 @@
 import React from 'react';
 import { ConjunctionEvent } from '../../types/orbital';
-import { MOCK_MISSION_PROFILES } from '../../services/mock/mockSatellites';
+import { useOrbitalIntelligence } from '../../context/OrbitalIntelligenceContext';
+import { isSameSatellite } from '../../api/adapters';
 import { formatDistance, formatVelocity, formatUTC, formatTimeRemaining } from '../../utils/formatters';
 import { ArrowRight } from 'lucide-react';
 
@@ -13,6 +14,8 @@ export const SelectedConjunctionPanel: React.FC<SelectedConjunctionPanelProps> =
   conjunction,
   onOpenAlertsCentre,
 }) => {
+  const { satellites } = useOrbitalIntelligence();
+
   if (!conjunction) {
     return (
       <div className="bg-slate-900/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-6 shadow-2xl h-full flex items-center justify-center text-slate-400 text-xs font-mono">
@@ -21,11 +24,9 @@ export const SelectedConjunctionPanel: React.FC<SelectedConjunctionPanelProps> =
     );
   }
 
-  const profile = MOCK_MISSION_PROFILES[conjunction.primary_object.norad_id];
-  const critScore = profile ? profile.criticality.score : 50;
-  const critTier = profile
-    ? profile.criticality.tier.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
-    : 'Tier 2 Moderate';
+  const matchedSat = satellites.find(s => isSameSatellite(s.noradId, conjunction.primary_object.norad_id));
+  const critScore = matchedSat ? matchedSat.criticality.score : 50;
+  const critTier = matchedSat ? matchedSat.criticality.tier : 'Tier 2 High';
 
   // Format UTC cleanly: "2026-11-23 14:22 UTC"
   const formattedUtcTime = formatUTC(conjunction.tca).substring(0, 16) + ' UTC';

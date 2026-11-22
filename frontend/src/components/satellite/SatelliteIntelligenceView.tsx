@@ -38,7 +38,7 @@ export const SatelliteIntelligenceView: React.FC<SatelliteIntelligenceViewProps>
     selectedCategory,
     setSelectedCategory,
     setSelectedSatelliteId,
-  } = useSatelliteIntelligence(initialSatelliteNoradId ? String(initialSatelliteNoradId) : 'cartosat-3');
+  } = useSatelliteIntelligence(initialSatelliteNoradId);
 
   // Categories list
   const categories: SatelliteCategory[] = [
