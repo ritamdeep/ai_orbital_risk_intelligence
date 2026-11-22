@@ -1,8 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { SpaceObjectSummary, ConjunctionEvent } from '../../types/orbital';
 import { formatCoordinates } from '../../utils/formatters';
+import {
+  computeSubSolarPoint,
+  computeSunDirectionVector,
+  latLonRadiusToCartesian,
+  trueScaleRadius,
+} from '../../utils/solarPosition';
 import { createNightEarthTexture } from './earthTexture';
+import {
+  ATMOSPHERE_FRAGMENT_SHADER,
+  ATMOSPHERE_VERTEX_SHADER,
+  CLOUDS_FRAGMENT_SHADER,
+  CLOUDS_VERTEX_SHADER,
+  EARTH_FRAGMENT_SHADER,
+  EARTH_VERTEX_SHADER,
+  ORBIT_LINE_FRAGMENT_SHADER,
+  ORBIT_LINE_VERTEX_SHADER,
+  createMarkerGlowTexture,
+  createRingTexture,
+} from './earthShaders';
 import { GlassCard } from '../common/GlassCard';
 
 interface Globe3DViewProps {
@@ -14,6 +33,119 @@ interface Globe3DViewProps {
   showDebris?: boolean;
   autoRotate?: boolean;
   heightClassName?: string;
+}
+
+interface PulseRingEntry {
+  sprite: THREE.Sprite;
+  material: THREE.SpriteMaterial;
+  phase: number;
+}
+
+interface SharedSpriteTextures {
+  satGlow: THREE.CanvasTexture;
+  selectedGlow: THREE.CanvasTexture;
+  debrisGlow: THREE.CanvasTexture;
+  hazardGlow: THREE.CanvasTexture;
+  selectedRing: THREE.CanvasTexture;
+  hazardRing: THREE.CanvasTexture;
+}
+
+const EARTH_RADIUS = 1.0;
+const CLOUDS_RADIUS = 1.005;
+const ATMOSPHERE_RADIUS = 1.12;
+const SPHERE_SEGMENTS = 72;
+// 1.5 degrees per minute in radians per second
+const CLOUD_DRIFT_RAD_PER_SEC = ((1.5 * Math.PI) / 180) / 60;
+const SUN_UPDATE_INTERVAL_MS = 60_000;
+const ADAPTIVE_WINDOW_SEC = 2.0;
+const ADAPTIVE_THRESHOLD_MS = 22.0;
+
+function createSolidDataTexture(r: number, g: number, b: number, a = 255): THREE.DataTexture {
+  const data = new Uint8Array([r, g, b, a]);
+  const tex = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
+  tex.needsUpdate = true;
+  return tex;
+}
+
+function configureTexture(
+  tex: THREE.Texture,
+  maxAnisotropy: number,
+  isColorMap: boolean
+): THREE.Texture {
+  tex.colorSpace = isColorMap ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+  tex.anisotropy = maxAnisotropy;
+  tex.generateMipmaps = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+function loadTextureAsync(
+  loader: THREE.TextureLoader,
+  url: string,
+  maxAnisotropy: number,
+  isColorMap: boolean
+): Promise<THREE.Texture> {
+  return new Promise((resolve, reject) => {
+    loader.load(
+      url,
+      (tex) => resolve(configureTexture(tex, maxAnisotropy, isColorMap)),
+      undefined,
+      (err) => reject(err)
+    );
+  });
+}
+
+function buildOrbitPoints(
+  latDeg: number,
+  lonDeg: number,
+  inclinationDeg: number,
+  orbitRadius: number,
+  segments = 96
+): THREE.Vector3[] {
+  const DEG = Math.PI / 180;
+  const RAD = 180 / Math.PI;
+  const latRad = latDeg * DEG;
+  const effIncRad = Math.max(Math.abs(latRad) + 0.002, Math.min(Math.PI - 0.002, inclinationDeg * DEG));
+  const sinInc = Math.sin(effIncRad);
+  const cosInc = Math.cos(effIncRad);
+
+  const sinU = Math.max(-1, Math.min(1, Math.sin(latRad) / Math.max(sinInc, 1e-4)));
+  const u0 = Math.asin(sinU);
+  const dLon0 = Math.atan2(cosInc * Math.sin(u0), Math.cos(u0)) * RAD;
+  const raanDeg = lonDeg - dLon0;
+
+  const pts: THREE.Vector3[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const u = (i / segments) * Math.PI * 2;
+    const ptLatDeg = Math.asin(Math.max(-1, Math.min(1, sinInc * Math.sin(u)))) * RAD;
+    const ptLonDeg = raanDeg + Math.atan2(cosInc * Math.sin(u), Math.cos(u)) * RAD;
+    const c = latLonRadiusToCartesian(ptLatDeg, ptLonDeg, orbitRadius);
+    pts.push(new THREE.Vector3(c.x, c.y, c.z));
+  }
+  return pts;
+}
+
+function disposeGroupChildren(group: THREE.Group): void {
+  while (group.children.length > 0) {
+    const child = group.children[0];
+    group.remove(child);
+    child.traverse((obj) => {
+      if (obj instanceof THREE.Mesh || obj instanceof THREE.Line) {
+        obj.geometry?.dispose();
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach((m) => m.dispose());
+        } else {
+          obj.material?.dispose();
+        }
+      } else if (obj instanceof THREE.Sprite) {
+        obj.material?.dispose();
+      }
+    });
+  }
 }
 
 export const Globe3DView: React.FC<Globe3DViewProps> = ({
@@ -28,278 +160,464 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [hoveredObject, setHoveredObject] = useState<SpaceObjectSummary | null>(null);
+  const [webglUnavailable, setWebglUnavailable] = useState<boolean>(false);
 
-  // Scene references
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  // Persistent refs for Three.js objects across prop updates
   const objectsGroupRef = useRef<THREE.Group | null>(null);
   const orbitsGroupRef = useRef<THREE.Group | null>(null);
   const hazardsGroupRef = useRef<THREE.Group | null>(null);
-  const earthMeshRef = useRef<THREE.Mesh | null>(null);
+  const pulseRingsRef = useRef<PulseRingEntry[]>([]);
+  const spriteTexturesRef = useRef<SharedSpriteTextures | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+
   const autoRotateRef = useRef<boolean>(autoRotate);
+  const prefersReducedMotionRef = useRef<boolean>(false);
+  const onSelectObjectRef = useRef(onSelectObject);
+
+  useEffect(() => {
+    onSelectObjectRef.current = onSelectObject;
+  }, [onSelectObject]);
 
   useEffect(() => {
     autoRotateRef.current = autoRotate;
+    if (controlsRef.current) {
+      controlsRef.current.autoRotate = autoRotate && !prefersReducedMotionRef.current;
+    }
   }, [autoRotate]);
-
-  const earthRadius = 4.95;
-
-  // Convert geodetic lat/lon/alt to 3D Cartesian coordinates
-  const latLonAltToVector3 = (
-    lat: number,
-    lon: number,
-    altKm: number,
-    radius = earthRadius
-  ): THREE.Vector3 => {
-    const phi = (90 - lat) * (Math.PI / 180);
-    const theta = (lon + 180) * (Math.PI / 180);
-    const scaledR = radius + (altKm / 6371) * 2.75;
-    const x = -(scaledR * Math.sin(phi) * Math.cos(theta));
-    const z = scaledR * Math.sin(phi) * Math.sin(theta);
-    const y = scaledR * Math.cos(phi);
-    return new THREE.Vector3(x, y, z);
-  };
 
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
 
-    const width = container.clientWidth || 720;
-    const height = container.clientHeight || 580;
+    let disposed = false;
 
-    // 1. Scene, Centered Camera, Transparent Renderer
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    prefersReducedMotionRef.current = motionQuery.matches;
+    const handleMotionChange = (ev: MediaQueryListEvent) => {
+      prefersReducedMotionRef.current = ev.matches;
+      if (controlsRef.current) {
+        controlsRef.current.autoRotate = autoRotateRef.current && !ev.matches;
+      }
+    };
+    motionQuery.addEventListener?.('change', handleMotionChange);
 
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
-    // Centered cleanly inside the viewport so the globe and outer orbit rings are never clipped
-    camera.position.set(0, 0.2, 18.2);
-    camera.lookAt(0, 0, 0);
-    cameraRef.current = camera;
+    // 1. Create WebGLRenderer safely (fallback gracefully if WebGL is unavailable)
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance',
+      });
+    } catch {
+      setWebglUnavailable(true);
+      motionQuery.removeEventListener?.('change', handleMotionChange);
+      return;
+    }
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const width = container.clientWidth || 560;
+    const height = container.clientHeight || 560;
+    let currentDpr = Math.min(window.devicePixelRatio || 1, 2);
+
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(currentDpr);
     renderer.setClearColor(0x000000, 0);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    rendererRef.current = renderer;
+    renderer.toneMappingExposure = 1.06;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // 2. Lighting — Key sun + soft cyan & indigo rim lighting
-    const ambientLight = new THREE.AmbientLight(0xdbeafe, 1.35);
-    scene.add(ambientLight);
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      setWebglUnavailable(true);
+    };
+    renderer.domElement.addEventListener('webglcontextlost', handleContextLost, false);
 
-    const sunLight = new THREE.DirectionalLight(0xffffff, 2.25);
-    sunLight.position.set(16, 10, 14);
-    scene.add(sunLight);
+    // 2. Scene & Camera positioned to frame the real-time UTC terminator cleanly
+    const scene = new THREE.Scene();
 
-    const cyanRimLight = new THREE.DirectionalLight(0x22d3ee, 2.0);
-    cyanRimLight.position.set(-14, 6, -10);
-    scene.add(cyanRimLight);
+    const camera = new THREE.PerspectiveCamera(38, width / height, 0.05, 100);
+    const initialSubSolar = computeSubSolarPoint(new Date());
+    // Frame the real-time UTC terminator cleanly (~55% sunlit day / ~45% amber city lights)
+    // with generous breathing room for the r=1.12 atmosphere and LEO orbit rings
+    const camPos = latLonRadiusToCartesian(20, initialSubSolar.longitudeDeg - 82, 3.65);
+    camera.position.set(camPos.x, camPos.y, camPos.z);
+    camera.lookAt(0, 0, 0);
 
-    const indigoRimLight = new THREE.DirectionalLight(0x6366f1, 1.2);
-    indigoRimLight.position.set(10, -12, -12);
-    scene.add(indigoRimLight);
+    // 3. OrbitControls rotates the camera (never the Earth mesh) so lat/lon & UTC sun stay exact
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enablePan = false;
+    controls.minDistance = 1.65;
+    controls.maxDistance = 12.0;
+    controls.rotateSpeed = 0.55;
+    controls.zoomSpeed = 0.75;
+    controls.autoRotate = autoRotateRef.current && !prefersReducedMotionRef.current;
+    controls.autoRotateSpeed = 0.4;
+    controls.target.set(0, 0, 0);
+    controls.update();
+    controlsRef.current = controls;
 
-    // 3. Earth Globe Mesh with Night Lights Texture
-    const earthGroup = new THREE.Group();
-    earthGroup.rotation.y = 1.1;
-    earthGroup.rotation.x = 0.22;
-    scene.add(earthGroup);
+    // 4. Real-time UTC Sun Direction Vector
+    const sunDirVec = new THREE.Vector3();
+    const updateSunDirection = () => {
+      const v = computeSunDirectionVector(new Date());
+      sunDirVec.set(v.x, v.y, v.z).normalize();
+    };
+    updateSunDirection();
 
-    const earthGeo = new THREE.SphereGeometry(earthRadius, 64, 64);
-    const earthTex = createNightEarthTexture();
+    // 5. Fallback Procedural Texture + Placeholder Uniform Textures
+    const fallbackTex = createNightEarthTexture();
+    fallbackTex.colorSpace = THREE.SRGBColorSpace;
+    const placeholderDay = createSolidDataTexture(16, 42, 78);
+    const placeholderNight = createSolidDataTexture(0, 0, 0);
+    const placeholderSpec = createSolidDataTexture(128, 128, 128);
+    const placeholderNormal = createSolidDataTexture(128, 128, 255);
+    const placeholderClouds = createSolidDataTexture(0, 0, 0, 0);
 
-    const earthMat = new THREE.MeshPhongMaterial({
-      map: earthTex,
-      emissive: 0x071a33,
-      emissiveIntensity: 0.45,
-      specular: 0x38bdf8,
-      shininess: 30,
+    const managedTextures: THREE.Texture[] = [
+      fallbackTex,
+      placeholderDay,
+      placeholderNight,
+      placeholderSpec,
+      placeholderNormal,
+      placeholderClouds,
+    ];
+
+    // 6. Earth Surface Sphere (single draw call)
+    const earthGeo = new THREE.SphereGeometry(EARTH_RADIUS, SPHERE_SEGMENTS, SPHERE_SEGMENTS);
+    const earthUniforms = {
+      uDayMap: { value: placeholderDay as THREE.Texture },
+      uNightMap: { value: placeholderNight as THREE.Texture },
+      uSpecularMap: { value: placeholderSpec as THREE.Texture },
+      uNormalMap: { value: placeholderNormal as THREE.Texture },
+      uFallbackMap: { value: fallbackTex as THREE.Texture },
+      uSunDir: { value: sunDirVec },
+      uBlend: { value: 0.0 },
+      uNormalScale: { value: 0.0 },
+    };
+    const earthMat = new THREE.ShaderMaterial({
+      uniforms: earthUniforms,
+      vertexShader: EARTH_VERTEX_SHADER,
+      fragmentShader: EARTH_FRAGMENT_SHADER,
     });
     const earthMesh = new THREE.Mesh(earthGeo, earthMat);
-    earthGroup.add(earthMesh);
-    earthMeshRef.current = earthMesh;
+    scene.add(earthMesh);
 
-    // 4a. Crisp Inner Rim Light Fresnel Shader
-    const rimGeo = new THREE.SphereGeometry(earthRadius * 1.02, 64, 64);
-    const rimMat = new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          vec3 viewDir = normalize(-vPosition);
-          float rim = 1.0 - max(0.0, dot(vNormal, viewDir));
-          float glow = pow(rim, 3.2);
-          gl_FragColor = vec4(0.22, 0.85, 0.98, glow * 0.65);
-        }
-      `,
-      blending: THREE.AdditiveBlending,
+    // 7. Clouds Sphere (r = 1.005, single draw call, depthWrite = false)
+    const cloudsGeo = new THREE.SphereGeometry(CLOUDS_RADIUS, SPHERE_SEGMENTS, SPHERE_SEGMENTS);
+    const cloudsUniforms = {
+      uCloudMap: { value: placeholderClouds as THREE.Texture },
+      uSunDir: { value: sunDirVec },
+      uOpacity: { value: 0.0 },
+    };
+    const cloudsMat = new THREE.ShaderMaterial({
+      uniforms: cloudsUniforms,
+      vertexShader: CLOUDS_VERTEX_SHADER,
+      fragmentShader: CLOUDS_FRAGMENT_SHADER,
       transparent: true,
-      side: THREE.FrontSide,
       depthWrite: false,
     });
-    scene.add(new THREE.Mesh(rimGeo, rimMat));
+    const cloudsMesh = new THREE.Mesh(cloudsGeo, cloudsMat);
+    cloudsMesh.visible = false;
+    scene.add(cloudsMesh);
 
-    // 4b. Outer Soft Atmosphere Halo (BackSide Fresnel)
-    const atmoGeo = new THREE.SphereGeometry(earthRadius * 1.10, 64, 64);
+    // 8. Atmosphere Fresnel Sphere (r = 1.12, BackSide, AdditiveBlending, single draw call)
+    const atmoGeo = new THREE.SphereGeometry(ATMOSPHERE_RADIUS, SPHERE_SEGMENTS, SPHERE_SEGMENTS);
+    const atmoUniforms = {
+      uSunDir: { value: sunDirVec },
+    };
     const atmoMat = new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          vec3 viewDir = normalize(-vPosition);
-          float rim = 1.0 - max(0.0, dot(-vNormal, viewDir));
-          float atmosphere = pow(clamp(rim, 0.0, 1.0), 3.6);
-          vec3 col = mix(vec3(0.06, 0.78, 0.96), vec3(0.39, 0.40, 0.95), 0.32);
-          gl_FragColor = vec4(col, atmosphere * 0.72);
-        }
-      `,
-      blending: THREE.AdditiveBlending,
-      transparent: true,
+      uniforms: atmoUniforms,
+      vertexShader: ATMOSPHERE_VERTEX_SHADER,
+      fragmentShader: ATMOSPHERE_FRAGMENT_SHADER,
       side: THREE.BackSide,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
-    scene.add(new THREE.Mesh(atmoGeo, atmoMat));
+    const atmoMesh = new THREE.Mesh(atmoGeo, atmoMat);
+    scene.add(atmoMesh);
 
-    // 5. Dynamic Object & Orbit Groups
+    // 9. Shared Sprite Textures & Dynamic Overlay Groups (in Earth-fixed frame)
+    const spriteTextures: SharedSpriteTextures = {
+      satGlow: createMarkerGlowTexture('#22d3ee', 'rgba(6, 182, 212, 0.45)'),
+      selectedGlow: createMarkerGlowTexture('#67e8f9', 'rgba(34, 211, 238, 0.65)'),
+      debrisGlow: createMarkerGlowTexture('#fbbf24', 'rgba(245, 158, 11, 0.45)'),
+      hazardGlow: createMarkerGlowTexture('#fb7185', 'rgba(244, 63, 94, 0.55)'),
+      selectedRing: createRingTexture('#67e8f9', 'rgba(34, 211, 238, 0.9)'),
+      hazardRing: createRingTexture('#f43f5e', 'rgba(244, 63, 94, 0.9)'),
+    };
+    spriteTexturesRef.current = spriteTextures;
+
     const objectsGroup = new THREE.Group();
-    earthGroup.add(objectsGroup);
-    objectsGroupRef.current = objectsGroup;
-
     const orbitsGroup = new THREE.Group();
-    earthGroup.add(orbitsGroup);
-    orbitsGroupRef.current = orbitsGroup;
-
     const hazardsGroup = new THREE.Group();
-    earthGroup.add(hazardsGroup);
+    scene.add(orbitsGroup);
+    scene.add(objectsGroup);
+    scene.add(hazardsGroup);
+    objectsGroupRef.current = objectsGroup;
+    orbitsGroupRef.current = orbitsGroup;
     hazardsGroupRef.current = hazardsGroup;
 
-    // 6. Mouse Interaction & Raycasting
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
+    // 10. Asynchronous Self-Hosted NASA Texture Loading with Smooth Cross-Fade
+    const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+    const isMobile =
+      window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    const supports4K =
+      window.innerWidth > 1600 &&
+      !isMobile &&
+      renderer.capabilities.maxTextureSize >= 4096;
 
-    const onPointerMove = (e: MouseEvent) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    const dayUrl = supports4K
+      ? '/textures/earth_day_4096.jpg'
+      : '/textures/earth_day_2048.jpg';
+    let using4K = supports4K;
+    let blendTarget = 0.0;
+    let blendStartTime = 0.0;
+    let blendActive = false;
+    let cloudTargetOpacity = 0.0;
 
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(objectsGroup.children, true);
-      if (intersects.length > 0) {
-        const hit = intersects[0].object.userData.spaceObject as SpaceObjectSummary;
-        if (hit) setHoveredObject(hit);
-      } else {
-        setHoveredObject(null);
-      }
-    };
+    const loader = new THREE.TextureLoader();
 
-    const onClick = (e: MouseEvent) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(objectsGroup.children, true);
-      if (intersects.length > 0) {
-        const hit = intersects[0].object.userData.spaceObject as SpaceObjectSummary;
-        if (hit) onSelectObject(hit);
-      }
-    };
-
-    container.addEventListener('pointermove', onPointerMove);
-    container.addEventListener('click', onClick);
-
-    let isDragging = false;
-    let prevMouseX = 0;
-    let prevMouseY = 0;
-
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      prevMouseX = e.clientX;
-      prevMouseY = e.clientY;
-    };
-
-    const onMouseUp = () => {
-      isDragging = false;
-    };
-
-    const onDragMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - prevMouseX;
-      const deltaY = e.clientY - prevMouseY;
-      prevMouseX = e.clientX;
-      prevMouseY = e.clientY;
-
-      earthGroup.rotation.y += deltaX * 0.005;
-      earthGroup.rotation.x += deltaY * 0.005;
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      camera.position.z = Math.max(10.5, Math.min(24, camera.position.z + e.deltaY * 0.01));
-    };
-
-    container.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mouseup', onMouseUp);
-    container.addEventListener('mousemove', onDragMove);
-    container.addEventListener('wheel', onWheel, { passive: false });
-
-    // 7. Animation Loop
-    let animationFrameId: number;
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-
-      if (autoRotateRef.current && !isDragging) {
-        earthGroup.rotation.y += 0.0012;
-      }
-
-      hazardsGroup.children.forEach((hazardNode) => {
-        const rings = hazardNode.userData.pulseRings as THREE.Mesh[];
-        if (rings) {
-          rings.forEach((ring, rIdx) => {
-            const scale = 1.0 + ((elapsed * 1.6 + rIdx * 0.75) % 2.0) * 0.85;
-            ring.scale.set(scale, scale, scale);
-            const mat = ring.material as THREE.MeshBasicMaterial;
-            if (mat) {
-              mat.opacity = Math.max(0, 0.8 - (scale - 1.0) * 0.65);
-            }
-          });
+    Promise.all([
+      loadTextureAsync(loader, dayUrl, maxAnisotropy, true),
+      loadTextureAsync(loader, '/textures/earth_night_2048.jpg', maxAnisotropy, true),
+      loadTextureAsync(loader, '/textures/earth_specular_2048.jpg', maxAnisotropy, false),
+    ])
+      .then(([dayTex, nightTex, specTex]) => {
+        if (disposed) {
+          dayTex.dispose();
+          nightTex.dispose();
+          specTex.dispose();
+          return;
         }
+        managedTextures.push(dayTex, nightTex, specTex);
+        earthUniforms.uDayMap.value = dayTex;
+        earthUniforms.uNightMap.value = nightTex;
+        earthUniforms.uSpecularMap.value = specTex;
+        blendTarget = 1.0;
+        blendStartTime = performance.now();
+        blendActive = true;
+      })
+      .catch(() => {
+        // Keep procedural fallback globe cleanly without crashing
       });
 
+    if (!isMobile) {
+      loadTextureAsync(loader, '/textures/earth_normal_2048.jpg', maxAnisotropy, false)
+        .then((normalTex) => {
+          if (disposed) {
+            normalTex.dispose();
+            return;
+          }
+          managedTextures.push(normalTex);
+          earthUniforms.uNormalMap.value = normalTex;
+          earthUniforms.uNormalScale.value = 0.35;
+        })
+        .catch(() => {
+          // Optional relief map: silently skip
+        });
+
+      loadTextureAsync(loader, '/textures/earth_clouds_1024.png', maxAnisotropy, true)
+        .then((cloudsTex) => {
+          if (disposed) {
+            cloudsTex.dispose();
+            return;
+          }
+          managedTextures.push(cloudsTex);
+          cloudsUniforms.uCloudMap.value = cloudsTex;
+          cloudsMesh.visible = true;
+          cloudTargetOpacity = 0.92;
+        })
+        .catch(() => {
+          // Optional clouds layer: silently skip
+        });
+    }
+
+    // Recompute UTC sun position every 60 seconds
+    const sunIntervalId = window.setInterval(updateSunDirection, SUN_UPDATE_INTERVAL_MS);
+
+    // 11. Pointer Raycasting (occluded back-side markers cannot be hovered/clicked)
+    const raycaster = new THREE.Raycaster();
+    const pointerNdc = new THREE.Vector2();
+    let pointerDownX = 0;
+    let pointerDownY = 0;
+
+    const pickVisibleSatellite = (clientX: number, clientY: number): SpaceObjectSummary | null => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return null;
+      pointerNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointerNdc, camera);
+      const spriteHits = raycaster.intersectObjects(objectsGroup.children, false);
+      if (spriteHits.length === 0) return null;
+
+      // Ensure marker is not behind the Earth sphere
+      const earthHits = raycaster.intersectObject(earthMesh, false);
+      const earthDist = earthHits.length > 0 ? earthHits[0].distance : Infinity;
+
+      for (let i = 0; i < spriteHits.length; i++) {
+        const hit = spriteHits[i];
+        const obj = hit.object.userData?.spaceObject as SpaceObjectSummary | undefined;
+        if (obj && hit.distance < earthDist) {
+          return obj;
+        }
+      }
+      return null;
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      pointerDownX = e.clientX;
+      pointerDownY = e.clientY;
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      const hit = pickVisibleSatellite(e.clientX, e.clientY);
+      setHoveredObject((prev) => (prev?.norad_id === hit?.norad_id ? prev : hit));
+      renderer.domElement.style.cursor = hit ? 'pointer' : '';
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      const moved = Math.hypot(e.clientX - pointerDownX, e.clientY - pointerDownY);
+      if (moved > 6) return;
+      const hit = pickVisibleSatellite(e.clientX, e.clientY);
+      if (hit) {
+        onSelectObjectRef.current(hit);
+      }
+    };
+
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
+    renderer.domElement.addEventListener('pointermove', onPointerMove);
+    renderer.domElement.addEventListener('pointerup', onPointerUp);
+
+    // 12. Adaptive Quality Downgrade Helper
+    let qualityDegraded = false;
+    let adaptiveAccumSec = 0;
+    let adaptiveFrames = 0;
+
+    const downgradeQuality = () => {
+      if (qualityDegraded) return;
+      qualityDegraded = true;
+      cloudsMesh.visible = false;
+      earthUniforms.uNormalScale.value = 0.0;
+      currentDpr = Math.min(currentDpr, 1.0);
+      renderer.setPixelRatio(currentDpr);
+
+      if (using4K) {
+        using4K = false;
+        loadTextureAsync(loader, '/textures/earth_day_2048.jpg', maxAnisotropy, true)
+          .then((tex2k) => {
+            if (disposed) {
+              tex2k.dispose();
+              return;
+            }
+            managedTextures.push(tex2k);
+            earthUniforms.uDayMap.value = tex2k;
+          })
+          .catch(() => {});
+      }
+    };
+
+    // 13. Zero-Allocation Animation Loop with Tab-Visibility Pause
+    let rafId: number | null = null;
+    let lastTimestamp = performance.now();
+    let elapsedSec = 0;
+
+    const animate = (now: number) => {
+      if (disposed || document.hidden) {
+        rafId = null;
+        return;
+      }
+      rafId = requestAnimationFrame(animate);
+
+      const rawDtMs = now - lastTimestamp;
+      lastTimestamp = now;
+      const dtSec = Math.min(rawDtMs / 1000, 0.1);
+      elapsedSec += dtSec;
+
+      // Adaptive quality monitor (average frame time > 22 ms over 2 s)
+      if (!qualityDegraded && rawDtMs > 0 && rawDtMs < 250) {
+        adaptiveAccumSec += rawDtMs / 1000;
+        adaptiveFrames += 1;
+        if (adaptiveAccumSec >= ADAPTIVE_WINDOW_SEC) {
+          const avgFrameMs = (adaptiveAccumSec * 1000) / Math.max(adaptiveFrames, 1);
+          if (avgFrameMs > ADAPTIVE_THRESHOLD_MS) {
+            downgradeQuality();
+          }
+          adaptiveAccumSec = 0;
+          adaptiveFrames = 0;
+        }
+      }
+
+      // Smooth cross-fade from procedural fallback to NASA textures (~650 ms)
+      if (blendActive) {
+        const progress = Math.min(1.0, (now - blendStartTime) / 650);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        earthUniforms.uBlend.value = eased * blendTarget;
+        if (cloudsMesh.visible) {
+          cloudsUniforms.uOpacity.value = eased * cloudTargetOpacity;
+        }
+        if (progress >= 1.0) {
+          blendActive = false;
+        }
+      } else if (cloudsMesh.visible && cloudsUniforms.uOpacity.value < cloudTargetOpacity) {
+        cloudsUniforms.uOpacity.value = Math.min(
+          cloudTargetOpacity,
+          cloudsUniforms.uOpacity.value + dtSec * 1.6
+        );
+      }
+
+      // Slow cloud drift (~1.5 deg/min relative to Earth)
+      if (cloudsMesh.visible && !prefersReducedMotionRef.current) {
+        cloudsMesh.rotation.y += CLOUD_DRIFT_RAD_PER_SEC * dtSec;
+      }
+
+      // Pulsing close-approach crimson halos (zero allocations)
+      const rings = pulseRingsRef.current;
+      if (rings.length > 0 && !prefersReducedMotionRef.current) {
+        for (let i = 0; i < rings.length; i++) {
+          const entry = rings[i];
+          const cycle = (elapsedSec * 0.72 + entry.phase) % 1.0;
+          const s = 0.042 + cycle * 0.068;
+          entry.sprite.scale.set(s, s, 1);
+          entry.material.opacity = (1.0 - cycle) * 0.85;
+        }
+      }
+
+      controls.update();
       renderer.render(scene, camera);
     };
 
-    animate();
+    const startLoop = () => {
+      if (disposed || document.hidden || rafId !== null) return;
+      lastTimestamp = performance.now();
+      rafId = requestAnimationFrame(animate);
+    };
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      } else {
+        updateSunDirection();
+        startLoop();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    startLoop();
+
+    // 14. Responsive Resize Observer
     const handleResize = () => {
-      if (!container) return;
-      const newWidth = container.clientWidth || 720;
-      const newHeight = container.clientHeight || 580;
+      if (!container || disposed) return;
+      const newWidth = container.clientWidth || 560;
+      const newHeight = container.clientHeight || 560;
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(newWidth, newHeight);
@@ -310,33 +628,56 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
     window.addEventListener('resize', handleResize);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      disposed = true;
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      window.clearInterval(sunIntervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      motionQuery.removeEventListener?.('change', handleMotionChange);
       resizeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
-      container.removeEventListener('pointermove', onPointerMove);
-      container.removeEventListener('click', onClick);
-      container.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mouseup', onMouseUp);
-      container.removeEventListener('mousemove', onDragMove);
-      container.removeEventListener('wheel', onWheel);
-      if (renderer.domElement && renderer.domElement.parentNode) {
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      renderer.domElement.removeEventListener('pointermove', onPointerMove);
+      renderer.domElement.removeEventListener('pointerup', onPointerUp);
+      renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
+
+      controls.dispose();
+      controlsRef.current = null;
+
+      disposeGroupChildren(objectsGroup);
+      disposeGroupChildren(orbitsGroup);
+      disposeGroupChildren(hazardsGroup);
+      pulseRingsRef.current = [];
+
+      earthGeo.dispose();
+      earthMat.dispose();
+      cloudsGeo.dispose();
+      cloudsMat.dispose();
+      atmoGeo.dispose();
+      atmoMat.dispose();
+
+      managedTextures.forEach((t) => t.dispose());
+      Object.values(spriteTextures).forEach((t) => t.dispose());
+      spriteTexturesRef.current = null;
+
+      if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }
-      earthTex.dispose();
       renderer.dispose();
     };
   }, []);
 
-  // Update space objects, orbits, and conjunction hazards when props change
+  // Sync true-scale satellite/debris sprites, depth-faded orbit lines, and pulsing hazard halos
   useEffect(() => {
     const objectsGroup = objectsGroupRef.current;
     const orbitsGroup = orbitsGroupRef.current;
     const hazardsGroup = hazardsGroupRef.current;
-    if (!objectsGroup || !orbitsGroup || !hazardsGroup) return;
+    const textures = spriteTexturesRef.current;
+    if (!objectsGroup || !orbitsGroup || !hazardsGroup || !textures) return;
 
-    while (objectsGroup.children.length > 0) objectsGroup.remove(objectsGroup.children[0]);
-    while (orbitsGroup.children.length > 0) orbitsGroup.remove(orbitsGroup.children[0]);
-    while (hazardsGroup.children.length > 0) hazardsGroup.remove(hazardsGroup.children[0]);
+    disposeGroupChildren(objectsGroup);
+    disposeGroupChildren(orbitsGroup);
+    disposeGroupChildren(hazardsGroup);
+    const nextPulseRings: PulseRingEntry[] = [];
 
     objects.forEach((obj) => {
       if (!showDebris && obj.object_type !== 'PAYLOAD') return;
@@ -344,103 +685,134 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
       const isSelected = selectedObject?.norad_id === obj.norad_id;
       const isDebris = obj.object_type === 'DEBRIS' || obj.object_type === 'ROCKET_BODY';
 
-      const pos = latLonAltToVector3(
+      // True orbital scale: radius = (6371 + altitude_km) / 6371
+      const r = trueScaleRadius(obj.current_position.altitude_km);
+      const pos = latLonRadiusToCartesian(
         obj.current_position.latitude,
         obj.current_position.longitude,
-        obj.current_position.altitude_km
+        r
       );
 
-      const markerSize = isSelected ? 0.25 : isDebris ? 0.13 : 0.18;
-      const markerGeo = new THREE.SphereGeometry(markerSize, 16, 16);
-      const markerColor = isSelected ? 0x22d3ee : isDebris ? 0xf59e0b : 0x06b6d4;
-      const markerMat = new THREE.MeshBasicMaterial({ color: markerColor });
+      // Fixed screen-size glowing sprite with proper depth testing (hidden behind Earth)
+      const markerMat = new THREE.SpriteMaterial({
+        map: isSelected
+          ? textures.selectedGlow
+          : isDebris
+          ? textures.debrisGlow
+          : textures.satGlow,
+        transparent: true,
+        depthTest: true,
+        depthWrite: false,
+        sizeAttenuation: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const markerSprite = new THREE.Sprite(markerMat);
+      markerSprite.position.set(pos.x, pos.y, pos.z);
+      const baseScale = isSelected ? 0.044 : isDebris ? 0.028 : 0.036;
+      markerSprite.scale.set(baseScale, baseScale, 1);
+      markerSprite.userData = { spaceObject: obj };
+      objectsGroup.add(markerSprite);
 
-      const markerMesh = new THREE.Mesh(markerGeo, markerMat);
-      markerMesh.position.copy(pos);
-      markerMesh.userData = { spaceObject: obj };
-      objectsGroup.add(markerMesh);
-
+      // Crisp cyan selection halo ring
       if (isSelected) {
-        const ringGeo = new THREE.RingGeometry(0.36, 0.54, 32);
-        const ringMat = new THREE.MeshBasicMaterial({
-          color: 0x22d3ee,
-          side: THREE.DoubleSide,
+        const ringMat = new THREE.SpriteMaterial({
+          map: textures.selectedRing,
           transparent: true,
-          opacity: 0.9,
+          opacity: 0.95,
+          depthTest: true,
+          depthWrite: false,
+          sizeAttenuation: false,
+          blending: THREE.AdditiveBlending,
         });
-        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-        ringMesh.position.copy(pos);
-        ringMesh.lookAt(0, 0, 0);
-        objectsGroup.add(ringMesh);
+        const ringSprite = new THREE.Sprite(ringMat);
+        ringSprite.position.set(pos.x, pos.y, pos.z);
+        ringSprite.scale.set(0.068, 0.068, 1);
+        objectsGroup.add(ringSprite);
       }
 
+      // Depth-faded glowing orbit trajectory at true scale
       if (showOrbits && (obj.object_type === 'PAYLOAD' || isSelected)) {
-        const orbitPts: THREE.Vector3[] = [];
-        const numPts = 80;
-        const incRad = (obj.inclination_deg * Math.PI) / 180;
         const avgAlt = (obj.perigee_km + obj.apogee_km) / 2;
-        const orbitRadius = earthRadius + (avgAlt / 6371) * 2.75;
-
-        for (let i = 0; i <= numPts; i++) {
-          const theta = (i / numPts) * Math.PI * 2;
-          const x = orbitRadius * Math.cos(theta);
-          const y = orbitRadius * Math.sin(theta) * Math.sin(incRad);
-          const z = orbitRadius * Math.sin(theta) * Math.cos(incRad);
-          orbitPts.push(new THREE.Vector3(x, y, z));
-        }
-
+        const orbitRadius = trueScaleRadius(avgAlt);
+        const orbitPts = buildOrbitPoints(
+          obj.current_position.latitude,
+          obj.current_position.longitude,
+          obj.inclination_deg,
+          orbitRadius,
+          96
+        );
         const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPts);
-        const orbitColor = isSelected ? 0x38bdf8 : isDebris ? 0xfb923c : 0xa5f3fc;
-        const orbitMat = new THREE.LineBasicMaterial({
-          color: orbitColor,
+        const orbitColor = new THREE.Color(
+          isSelected ? 0x38bdf8 : isDebris ? 0xfb923c : 0x67e8f9
+        );
+        const orbitMat = new THREE.ShaderMaterial({
+          uniforms: {
+            uColor: { value: orbitColor },
+            uBaseOpacity: { value: isSelected ? 0.85 : 0.42 },
+          },
+          vertexShader: ORBIT_LINE_VERTEX_SHADER,
+          fragmentShader: ORBIT_LINE_FRAGMENT_SHADER,
           transparent: true,
-          opacity: isSelected ? 0.9 : 0.45,
+          depthTest: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
         });
         const orbitLine = new THREE.Line(orbitGeo, orbitMat);
         orbitsGroup.add(orbitLine);
       }
     });
 
+    // Pulsing crimson close-approach markers (deduplicated per primary object)
+    const seenPrimaryIds = new Set<number>();
     conjunctions.forEach((conj) => {
       const primary = objects.find((o) => o.norad_id === conj.primary_object.norad_id);
-      if (!primary) return;
+      if (!primary || seenPrimaryIds.has(primary.norad_id)) return;
+      seenPrimaryIds.add(primary.norad_id);
 
-      const pos = latLonAltToVector3(
+      const r = trueScaleRadius(primary.current_position.altitude_km);
+      const pos = latLonRadiusToCartesian(
         primary.current_position.latitude,
         primary.current_position.longitude,
-        primary.current_position.altitude_km
+        r
       );
 
-      const hazardNode = new THREE.Group();
-      hazardNode.position.copy(pos);
-
-      const centerGeo = new THREE.SphereGeometry(0.24, 16, 16);
-      const centerMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
-      hazardNode.add(new THREE.Mesh(centerGeo, centerMat));
-
-      const pulseRings: THREE.Mesh[] = [];
-      [0.45, 0.75, 1.05].forEach((r, idx) => {
-        const ringGeo = new THREE.RingGeometry(r - 0.05, r + 0.05, 32);
-        const ringMat = new THREE.MeshBasicMaterial({
-          color: 0xf43f5e,
-          transparent: true,
-          opacity: 0.8 - idx * 0.2,
-          side: THREE.DoubleSide,
-        });
-        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-        ringMesh.lookAt(pos.clone().negate());
-        hazardNode.add(ringMesh);
-        pulseRings.push(ringMesh);
+      const coreMat = new THREE.SpriteMaterial({
+        map: textures.hazardGlow,
+        transparent: true,
+        depthTest: true,
+        depthWrite: false,
+        sizeAttenuation: false,
+        blending: THREE.AdditiveBlending,
       });
+      const coreSprite = new THREE.Sprite(coreMat);
+      coreSprite.position.set(pos.x, pos.y, pos.z);
+      coreSprite.scale.set(0.042, 0.042, 1);
+      hazardsGroup.add(coreSprite);
 
-      hazardNode.userData = { pulseRings };
-      hazardsGroup.add(hazardNode);
+      [0.0, 0.5].forEach((phase) => {
+        const ringMat = new THREE.SpriteMaterial({
+          map: textures.hazardRing,
+          transparent: true,
+          opacity: 0.75,
+          depthTest: true,
+          depthWrite: false,
+          sizeAttenuation: false,
+          blending: THREE.AdditiveBlending,
+        });
+        const ringSprite = new THREE.Sprite(ringMat);
+        ringSprite.position.set(pos.x, pos.y, pos.z);
+        ringSprite.scale.set(0.068, 0.068, 1);
+        hazardsGroup.add(ringSprite);
+        nextPulseRings.push({ sprite: ringSprite, material: ringMat, phase });
+      });
     });
+
+    pulseRingsRef.current = nextPulseRings;
   }, [objects, conjunctions, selectedObject, showOrbits, showDebris]);
 
   return (
     <div
-      className={`relative w-full ${heightClassName || 'h-[540px] lg:h-[620px]'} flex items-center justify-center select-none`}
+      className={`relative aspect-square ${heightClassName || 'w-full max-w-[min(74vh,560px)]'} flex items-center justify-center select-none`}
     >
       {/* Subtle radial atmosphere backdrop glow centered behind the globe */}
       <div
@@ -448,22 +820,34 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
         aria-hidden="true"
       >
         <div
-          className="w-[360px] h-[360px] sm:w-[460px] sm:h-[460px] lg:w-[540px] lg:h-[540px] rounded-full opacity-60 blur-3xl"
+          className="w-[74%] h-[74%] rounded-full opacity-50 blur-3xl"
           style={{
             background:
-              'radial-gradient(circle, rgba(34, 211, 238, 0.22) 0%, rgba(56, 189, 248, 0.10) 46%, rgba(99, 102, 241, 0.06) 68%, transparent 80%)',
+              'radial-gradient(circle, rgba(34, 211, 238, 0.20) 0%, rgba(56, 189, 248, 0.10) 48%, rgba(99, 102, 241, 0.05) 70%, transparent 82%)',
           }}
         />
       </div>
 
-      {/* 3D WebGL Canvas */}
-      <div ref={mountRef} className="relative z-10 w-full h-full cursor-grab active:cursor-grabbing" />
+      {/* 3D WebGL Canvas or Graceful Non-WebGL Fallback */}
+      {webglUnavailable ? (
+        <div className="relative z-10 w-[78%] h-[78%] rounded-full bg-gradient-to-br from-[#0c2748] via-[#071a33] to-[#030b1a] border border-cyan-400/30 shadow-[0_0_60px_rgba(34,211,238,0.22)] flex flex-col items-center justify-center text-center p-6">
+          <span className="type-label text-cyan-300">2D Fallback Active</span>
+          <p className="text-xs text-[#b4c6dc] mt-2 max-w-[220px]">
+            WebGL rendering is unavailable in this environment. Orbital telemetry remains active.
+          </p>
+        </div>
+      ) : (
+        <div
+          ref={mountRef}
+          className="relative z-10 w-full h-full cursor-grab active:cursor-grabbing"
+        />
+      )}
 
       {/* Hover Tooltip */}
       {hoveredObject && (
         <GlassCard
           variant="chip"
-          className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-4 py-3 text-xs max-w-xs pointer-events-none"
+          className="absolute top-3 left-1/2 -translate-x-1/2 z-20 px-4 py-3 text-xs max-w-xs pointer-events-none"
         >
           <div className="flex items-center justify-between space-x-3 mb-1.5">
             <span className="font-display font-semibold text-cyan-300 text-sm">

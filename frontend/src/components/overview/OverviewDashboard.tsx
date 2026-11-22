@@ -74,9 +74,9 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   };
 
   return (
-    <div className="relative w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex-1 flex flex-col justify-between gap-4 select-none">
-      {/* MAIN HERO STAGE: Left KPIs | Centered Full-Viewport Globe | Right Mission Panels */}
-      <div className="relative flex-1 grid grid-cols-1 lg:grid-cols-12 items-center gap-5 min-h-[500px] lg:min-h-[580px]">
+    <div className="relative w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex-1 flex flex-col justify-between gap-3 select-none">
+      {/* MAIN HERO STAGE: Left KPIs | Centered Square Full-Viewport Globe | Right Mission Panels */}
+      <div className="relative flex-1 grid grid-cols-1 lg:grid-cols-12 items-center gap-5 min-h-[420px] xl:min-h-[540px]">
         {/* LEFT COLUMN: 4 Real Glass KPI Cards */}
         <div className="order-2 lg:order-1 lg:col-span-3 space-y-3.5 z-20">
           {/* KPI 1 */}
@@ -136,8 +136,8 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
           </GlassCard>
         </div>
 
-        {/* CENTER HERO: Fully Centered, Unclipped 3D Globe */}
-        <div className="order-1 lg:order-2 lg:col-span-6 flex items-center justify-center relative z-10">
+        {/* CENTER HERO: Centered Square, Unclipped Photorealistic 3D Globe */}
+        <div className="order-1 lg:order-2 lg:col-span-6 flex flex-col items-center justify-center relative z-10 w-full">
           <Globe3DView
             objects={objects}
             conjunctions={conjunctions}
@@ -146,8 +146,11 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
             showOrbits={showOrbits}
             showDebris={showDebris}
             autoRotate={autoRotate}
-            heightClassName="h-[420px] sm:h-[480px] lg:h-[540px] xl:h-[600px]"
+            heightClassName="w-[min(100%,58vh,620px)] max-w-full"
           />
+          <p className="text-[11px] text-[#94adc9]/90 font-sans tracking-[0.02em] text-center -mt-1">
+            Simulated rendering. Positions from SGP4 screening.
+          </p>
         </div>
 
         {/* RIGHT COLUMN: Selected Satellite Panel & Satellite Service Continuity */}

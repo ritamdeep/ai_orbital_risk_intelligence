@@ -205,8 +205,10 @@ const AppContent: React.FC = () => {
               {SCIENTIFIC_DISCLAIMERS.PRELIMINARY_SCREENING} {SCIENTIFIC_DISCLAIMERS.NO_INVENTED_PROBABILITY}
             </p>
           </div>
-          <div className="text-xs font-sans font-medium text-[#94adc9] shrink-0">
-            ASTRAVIGIL Space-Tech Platform • Live Integration Edition
+          <div className="text-xs font-sans font-medium text-[#94adc9] shrink-0 text-center md:text-right">
+            <span>ASTRAVIGIL Space-Tech Platform • Live Integration Edition</span>
+            <span className="mx-2 text-slate-600">•</span>
+            <span className="text-[#b4c6dc]">Imagery: NASA</span>
           </div>
         </div>
       </footer>
