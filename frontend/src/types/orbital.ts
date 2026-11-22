@@ -14,10 +14,12 @@ export interface SpaceObjectSummary {
   current_position: GeodeticCoordinate;
   tle_epoch: string;
   is_active: boolean;
+  dataSource?: 'real' | 'mock';
 }
 
 export interface ConjunctionEvent {
   conjunction_id: string;
+  eventId?: string; // Contract alias
   primary_object: {
     norad_id: number;
     name: string;
@@ -31,16 +33,21 @@ export interface ConjunctionEvent {
     object_type: ObjectType;
     orbit_regime: OrbitRegime;
     country_code: string;
-    origin_debris_event?: string; // e.g. "Fengyun 1C ASAT Debris (2007)", "Iridium 33 / Cosmos 2251 (2009)"
+    origin_debris_event?: string;
   };
   tca: string; // ISO-8601 UTC Time of Closest Approach
+  tcaUtc?: string; // Contract alias
   miss_distance_km: number; // Minimum physical separation
+  missDistanceKm?: number; // Contract alias
   relative_velocity_km_s: number;
+  relativeVelocityKmS?: number; // Contract alias
   altitude_at_tca_km: number;
+  altitudeAtTcaKm?: number; // Contract alias
   tle_epoch_age_hours: number;
-  is_preliminary_screening: boolean; // Always true for SGP4 TLE screening
+  is_preliminary_screening: boolean;
   investigation_status: 'UNREVIEWED' | 'UNDER_EVALUATION' | 'MONITORING' | 'DISMISSED';
   data_source: DataSourceMetadata;
+  dataSource?: 'real' | 'mock';
 }
 
 export interface TrajectoryPoint extends GeodeticCoordinate {

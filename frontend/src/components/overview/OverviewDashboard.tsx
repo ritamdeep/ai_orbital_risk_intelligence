@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { SpaceObjectSummary, ConjunctionEvent } from '../../types/orbital';
 import { Globe3DView } from '../monitoring/Globe3DView';
-import { MOCK_MISSION_PROFILES } from '../../services/mock/mockSatellites';
+import { useOrbitalIntelligence } from '../../context/OrbitalIntelligenceContext';
+import { formatEnum } from '../../utils/textFormatters';
 import { 
   Orbit, 
   Satellite, 
@@ -44,22 +45,23 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   // AI search bar state
   const [searchPrompt, setSearchPrompt] = useState<string>('');
 
+  const { selectedMissionProfile, selectedSatellite } = useOrbitalIntelligence();
+
   // Default to CARTOSAT-3 (44431) or current selectedObject or first object
   const activeSatellites = objects.filter(o => o.object_type === 'PAYLOAD');
   const cataloguedDebris = objects.filter(o => o.object_type === 'DEBRIS' || o.object_type === 'ROCKET_BODY');
   const urgentEvents = conjunctions.filter(c => c.miss_distance_km < 5.0);
 
   const currentSat = selectedObject || objects.find(o => o.norad_id === 44431) || objects[0];
-  const currentProfile = currentSat ? MOCK_MISSION_PROFILES[currentSat.norad_id] : null;
 
   // Format purpose
   const getPurpose = (sat: SpaceObjectSummary | null) => {
     if (!sat) return 'Earth Observation';
-    if (currentProfile?.mission_category) {
-      return currentProfile.mission_category
-        .split('_')
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(' ');
+    if (selectedMissionProfile?.primary_mission_purpose) {
+      return selectedSatellite?.category || selectedMissionProfile.primary_mission_purpose;
+    }
+    if (selectedSatellite?.category) {
+      return selectedSatellite.category;
     }
     return sat.object_type === 'PAYLOAD' ? 'Earth Observation' : 'Orbital Fragment';
   };

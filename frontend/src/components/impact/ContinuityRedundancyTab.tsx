@@ -52,7 +52,14 @@ export const ContinuityRedundancyTab: React.FC<ContinuityRedundancyTabProps> = (
       ) : (
         <div className="space-y-6">
           {alternatives.map((alt) => {
-            const comparisonDimensions = getAlternativeComparison(primaryProfile.norad_id, alt.norad_id);
+            const comparisonDimensions = (alt.redundancy_gaps && alt.redundancy_gaps.length > 0 && alt.redundancy_gaps[0].target_value)
+              ? alt.redundancy_gaps.map(g => ({
+                  dimension: g.parameter,
+                  primaryValue: g.target_value,
+                  alternativeValue: g.alternative_value,
+                  gapChip: g.impact_assessment?.includes('GAP') || g.impact_assessment?.includes('lower') || g.impact_assessment?.includes('slower') || g.impact_assessment?.includes('Different') ? 'Performance Gap' : undefined,
+                }))
+              : getAlternativeComparison(primaryProfile.norad_id, alt.norad_id);
             const isFullParity = alt.sensor_parity === 'FULL';
 
             return (

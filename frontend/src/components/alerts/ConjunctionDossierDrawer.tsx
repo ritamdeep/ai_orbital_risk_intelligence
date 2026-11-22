@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ConjunctionEvent } from '../../types/orbital';
-import { MOCK_MISSION_PROFILES } from '../../services/mock/mockSatellites';
+import { useOrbitalIntelligence } from '../../context/OrbitalIntelligenceContext';
+import { isSameSatellite } from '../../api/adapters';
 import { formatDistance, formatVelocity, formatUTC, formatTimeRemaining } from '../../utils/formatters';
 import { formatEnum, formatOperator } from '../../utils/textFormatters';
 import { X, ArrowRight, ShieldAlert, AlertTriangle, Layers, ExternalLink } from 'lucide-react';
@@ -35,12 +36,14 @@ export const ConjunctionDossierDrawer: React.FC<ConjunctionDossierDrawerProps> =
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  const { satellites } = useOrbitalIntelligence();
+
   if (!isOpen || !conjunction) return null;
 
-  const profile = MOCK_MISSION_PROFILES[conjunction.primary_object.norad_id];
-  const critScore = profile ? profile.criticality.score : 50;
-  const critTier = profile ? formatEnum(profile.criticality.tier) : 'Tier 2 Moderate';
-  const scoringFactors = profile ? profile.criticality.scoring_factors : [
+  const matchedSat = satellites.find(s => isSameSatellite(s.noradId, conjunction.primary_object.norad_id));
+  const critScore = matchedSat ? matchedSat.criticality.score : 50;
+  const critTier = matchedSat ? matchedSat.criticality.tier : 'Tier 2 Moderate';
+  const scoringFactors = [
     'Critical national orbital sensing asset',
     'Standard geometric screening buffer applicable',
   ];

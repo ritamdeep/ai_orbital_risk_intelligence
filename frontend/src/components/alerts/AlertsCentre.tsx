@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ConjunctionEvent } from '../../types/orbital';
 import { InvestigationStatus } from '../../types/common';
-import { MOCK_MISSION_PROFILES } from '../../services/mock/mockSatellites';
+import { useOrbitalIntelligence } from '../../context/OrbitalIntelligenceContext';
+import { isSameSatellite } from '../../api/adapters';
 import { formatDistance, formatVelocity, formatUTC, formatTimeRemaining } from '../../utils/formatters';
 import { formatEnum } from '../../utils/textFormatters';
 import { PHYSICAL_SEVERITY_THRESHOLDS } from '../../constants/screeningConfig';
-import { USE_MOCK_DATA } from '../../services/apiClient';
 import { StatusDropdown } from './StatusDropdown';
 import { ConjunctionDossierDrawer } from './ConjunctionDossierDrawer';
 import { 
@@ -41,6 +41,7 @@ export const AlertsCentre: React.FC<AlertsCentreProps> = ({
   onNavigateToRisk,
   onNavigateToContinuity,
 }) => {
+  const { satellites, overallFidelity } = useOrbitalIntelligence();
   const [statusFilter, setStatusFilter] = useState<'ALL' | InvestigationStatus>('ALL');
   const [sortBy, setSortBy] = useState<AlertSortOption>('soonest_tca');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -132,13 +133,13 @@ export const AlertsCentre: React.FC<AlertsCentreProps> = ({
 
   // Helper to get criticality score for a conjunction
   const getCriticality = (noradId: number) => {
-    const profile = MOCK_MISSION_PROFILES[noradId];
-    return profile ? profile.criticality.score : 50;
+    const sat = satellites.find(s => isSameSatellite(s.noradId, noradId));
+    return sat ? sat.criticality.score : 50;
   };
 
   const getCriticalityTier = (noradId: number) => {
-    const profile = MOCK_MISSION_PROFILES[noradId];
-    return profile ? profile.criticality.tier : 'TIER_3_MODERATE';
+    const sat = satellites.find(s => isSameSatellite(s.noradId, noradId));
+    return sat ? sat.criticality.tier : 'Tier 3 Moderate';
   };
 
   // Filter conjunctions
@@ -239,7 +240,7 @@ export const AlertsCentre: React.FC<AlertsCentreProps> = ({
                 >
                   {filteredEvents.length} Events
                 </span>
-                {USE_MOCK_DATA && (
+                {overallFidelity !== 'Live' && (
                   <span className="text-[10px] text-slate-400 font-mono italic hidden sm:inline">
                     Mock data. Illustrative values.
                   </span>

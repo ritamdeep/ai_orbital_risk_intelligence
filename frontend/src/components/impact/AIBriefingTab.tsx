@@ -1,37 +1,56 @@
 import React from 'react';
 import { OperatorAIBriefing } from '../../types/intelligence';
-import { Sparkles, Info, ShieldCheck } from 'lucide-react';
+import { Sparkles, Info, ShieldCheck, RefreshCw } from 'lucide-react';
 
 interface AIBriefingTabProps {
   aiBriefing: OperatorAIBriefing | null;
   loading?: boolean;
+  onRetry?: () => void;
 }
 
-export const AIBriefingTab: React.FC<AIBriefingTabProps> = ({ aiBriefing, loading }) => {
+export const AIBriefingTab: React.FC<AIBriefingTabProps> = ({ aiBriefing, loading, onRetry }) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header and Mandatory Fixed Caption */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-800 gap-3">
         <div>
-          <div className="flex items-center space-x-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <h3 className="text-base font-bold text-white tracking-wide">
               AI Decision-Support Executive Briefing
             </h3>
             <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-950/70 text-cyan-300 border border-cyan-500/40 font-mono shadow-sm">
               <Sparkles className="w-3 h-3 text-cyan-400" />
-              <span>AI-generated explanation</span>
+              <span>{aiBriefing?.generatedBy === 'llm' ? 'LLM Neural Briefing' : 'Rule-Based Synthesis'}</span>
             </span>
+            {aiBriefing?.dataSource === 'mock' && (
+              <span className="text-[10px] text-slate-400 font-mono italic">
+                Mock data. Illustrative values.
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-400 mt-0.5 font-sans">
             Natural language synthesis of orbital encounter mechanics + mission criticality.
           </p>
         </div>
 
-        {aiBriefing && (
-          <span className="text-[11px] text-slate-400 font-mono shrink-0">
-            Synthesized at {aiBriefing.generated_at.replace('T', ' ').substring(0, 19)} UTC
-          </span>
-        )}
+        <div className="flex items-center space-x-3 shrink-0">
+          {aiBriefing && (
+            <span className="text-[11px] text-slate-400 font-mono">
+              Synthesized at {aiBriefing.generated_at.replace('T', ' ').substring(0, 19)} UTC
+            </span>
+          )}
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              disabled={loading}
+              className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-slate-900 border border-slate-700 hover:border-cyan-500/50 text-slate-300 hover:text-white transition-all disabled:opacity-50"
+              title="Re-synthesize briefing"
+            >
+              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
+              <span>Retry</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Mandatory Fixed Caption Banner */}
@@ -57,7 +76,7 @@ export const AIBriefingTab: React.FC<AIBriefingTabProps> = ({ aiBriefing, loadin
         </div>
       ) : aiBriefing ? (
         <div className="space-y-5">
-          {/* Executive Summary (Readable sans-serif) */}
+          {/* Executive Summary */}
           <div className="bg-slate-950/70 text-slate-200 p-5 rounded-2xl border border-slate-800/80 shadow-lg space-y-2">
             <div className="text-xs uppercase tracking-wider text-cyan-400 font-bold font-mono">
               Incident Executive Summary
@@ -87,6 +106,18 @@ export const AIBriefingTab: React.FC<AIBriefingTabProps> = ({ aiBriefing, loadin
               </p>
             </div>
           </div>
+
+          {/* Service Impact & Continuity Plan */}
+          {aiBriefing.service_continuity_plan && (
+            <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 shadow-lg space-y-2">
+              <div className="text-xs font-bold text-cyan-400 uppercase tracking-wider font-mono">
+                Service Continuity & Redundancy Strategy
+              </div>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+                {aiBriefing.service_continuity_plan}
+              </p>
+            </div>
+          )}
 
           {/* Recommended Actionable Procedures */}
           <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 shadow-lg space-y-3">
@@ -121,6 +152,14 @@ export const AIBriefingTab: React.FC<AIBriefingTabProps> = ({ aiBriefing, loadin
           <p className="text-slate-500 max-w-md mx-auto">
             Briefings are automatically synthesized for screened close-approach events involving high-criticality assets.
           </p>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="mt-3 px-4 py-2 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-medium hover:bg-cyan-500/30 transition-all"
+            >
+              Generate Briefing
+            </button>
+          )}
         </div>
       )}
     </div>

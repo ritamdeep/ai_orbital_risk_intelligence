@@ -79,6 +79,7 @@ export interface SatelliteMissionProfile {
   criticality: CriticalityAssessment;
   earth_impact: EarthServiceImpact;
   continuity_alternatives: AlternativeSatellite[];
+  dataSource?: 'real' | 'mock';
 }
 
 export interface OperatorAIBriefing {
@@ -90,4 +91,6 @@ export interface OperatorAIBriefing {
   actionable_recommendations: string[];
   scientific_disclaimer: string;
   generated_at: string;
+  dataSource?: 'real' | 'mock';
+  generatedBy?: 'llm' | 'rule_based';
 }

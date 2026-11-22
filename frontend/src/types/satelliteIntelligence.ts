@@ -45,7 +45,7 @@ export interface SatelliteCatalogueItem {
   periodMin: number;
   inclinationDeg: number;
   operator: string;
-  status: 'Operational' | 'Degraded' | 'Standby' | 'Decommissioned';
+  status: 'Operational' | 'Degraded' | 'Standby' | 'Decommissioned' | 'Inactive';
   capabilities: SatelliteCapabilities;
   criticality: CriticalityScoreData;
   supportedServices: SupportedEarthService[];
